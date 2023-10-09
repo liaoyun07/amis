@@ -112,7 +112,7 @@
           "name": "spec",
           "label": "spec",
           "labelRemark": {
-            "content": "可参照示例进行添加",
+            "content": "可参照示例进行创建",
             "placement": "top"
           },
           "schema": {
