@@ -1,0 +1,146 @@
+{
+  "type": "page",
+  "name": "page-namespace-list",
+  "body": [
+    {
+      "type": "button",
+      "label": "创建Namespace",
+      "size": "md",
+      "level": "primary",
+      "actionType": "dialog",
+      "dialog": {
+        "type": "dialog",
+        "title": "创建Namespace",
+        "closeOnEsc": true,
+        "body": [
+          {
+            "type": "form",
+            "title": "表单",
+            "api": {
+              "method": "get",
+              "url": "${API_HOST}/namespace/add",
+              "data": {
+                "name": "${name}"
+              },
+              "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+            },
+            "body": [
+              {
+                "label": "名称",
+                "type": "input-text",
+                "name": "name",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "type": "submit",
+            "label": "创建",
+            "actionType": "submit",
+            "required": [
+              "name"
+            ],
+            "level": "info"
+          }
+        ]
+      }
+    },
+    {
+      "type": "crud",
+      "name": "namespace-list",
+      "headerToolbar": [
+        {
+          "type": "reload",
+          "align": "left",
+          "icon": "iconfont icon-refresh",
+          "label": "刷新",
+          "tooltip": "",
+          "level": "primary"
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "draggable": false,
+          "icon": "fas fa-cog",
+          "overlay": true,
+          "footerBtnSize": "sm"
+        }
+      ],
+      "api": {
+        "url": "${API_HOST}/namespace/search/all",
+        "method": "get",
+        "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+      },
+      "columns": [
+        {
+          "name": "name",
+          "label": "名称",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "creationTime",
+          "label": "创建时间",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "status",
+          "label": "状态",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "type": "operation",
+          "label": "操作",
+          "labelClassName": "font-bold",
+          "align": "center",
+          "width": "",
+          "buttons": [
+            {
+              "type": "button-group",
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "查看详情",
+                  "level": "primary",
+                  "actionType": "link",
+                  "link": "/namespace/$name"
+                },
+                {
+                  "type": "button",
+                  "label": "删除",
+                  "level": "danger",
+                  "actionType": "ajax",
+                  "confirmText": "此操作将会删除$name下所有资源，确定进行？",
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/namespace/delete",
+                    "data": {
+                      "name": "${name}"
+                    },
+                    "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+                  },
+                  "reload": "namespace-list"
+                }
+              ]
+            }
+          ],
+          "placeholder": "-",
+          "fixed": "right"
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "暂无数据",
+      "tableClassName": "table-db table-striped",
+      "headerClassName": "crud-table-header",
+      "footerClassName": "crud-table-footer",
+      "toolbarClassName": "crud-table-toolbar",
+      "combineNum": 0,
+      "bodyClassName": "panel-default"
+    }
+  ]
+}
