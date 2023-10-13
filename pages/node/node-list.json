@@ -25,8 +25,7 @@
       ],
       "api": {
         "url": "${API_HOST}/node/search/all",
-        "method": "get",
-        "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+        "method": "get"
       },
       "columns": [
         {

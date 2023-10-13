@@ -47,8 +47,7 @@
       "type": "form",
       "api": {
         "method": "post",
-        "url": "${API_HOST}/service/add",
-        "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
+        "url": "${API_HOST}/service/add"
       },
       "debug": true,
       "redirect": "/service",
