@@ -4,21 +4,42 @@ const path = require('path');
 const reload = require('reload');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
-
+const port = 3000;
 const app = express();
 
-app.set('port', process.env.PORT || 3000);
+app.set('port', port);
 app.use(logger('dev'));
 app.use(bodyParser.json()); // Parses json, multi-part (file), url-encoded
 
 app.use('/public', express.static('public'));
 app.use('/pages', express.static('pages'));
 
-app.get('/*', function (req, res) {
-  res.sendFile(path.join(__dirname, 'index.html'));
+
+app.get('/login', function (req, res) {
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+app.get('/home', function (req, res) {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// app.use('/test', express.static('test'));
+// app.get('/*', function (req, res) {
+//     res.sendFile('test.html', { root: __dirname });
+// });
+// app.get('/', function (req, res) {
+//     res.sendFile('test.html', { root: __dirname });
+// });
+
+
+
 const server = http.createServer(app);
+
+// server.listen(app.get('port'), function () {
+//     console.log(
+//         'Web server listening on port http://localhost:' + app.get('port')
+//     );
+// });
 
 // Reload code here
 reload(app)

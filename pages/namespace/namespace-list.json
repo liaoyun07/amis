@@ -21,8 +21,7 @@
               "url": "${API_HOST}/namespace/add",
               "data": {
                 "name": "${name}"
-              },
-              "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+              }
             },
             "body": [
               {
@@ -70,8 +69,7 @@
       ],
       "api": {
         "url": "${API_HOST}/namespace/search/all",
-        "method": "get",
-        "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+        "method": "get"
       },
       "columns": [
         {
@@ -120,8 +118,7 @@
                     "url": "${API_HOST}/namespace/delete",
                     "data": {
                       "name": "${name}"
-                    },
-                    "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: payload.data\n}"
+                    }
                   },
                   "reload": "namespace-list"
                 }

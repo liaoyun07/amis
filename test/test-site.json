@@ -52,13 +52,13 @@
           {
             "label": "创建Service",
             "url": "/service/new",
-            "schemaApi": "get:/pages/service/service-new.json",
+            "schemaApi": "get:pages/service/service-new.json",
             "hidden": true
           },
           {
             "label": "Deployment",
             "url": "/deployment",
-            "schemaApi": "get:/pages/deployment/deployment-list.json"
+            "schemaApi": "get:/test/test-deployment-list.json"
           },
           {
             "label": "Deployment详情",
@@ -68,8 +68,8 @@
           {
             "label": "创建Deployment",
             "url": "/deployment/new",
-            "schemaApi": "get:/pages/deployment/deployment-new.json",
-            "hidden": true
+            "schemaApi": "get:/test/test-deployment-new.json",
+            "hidden": false
           }
         ]
       }
