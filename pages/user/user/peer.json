@@ -1,0 +1,176 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "crud",
+      "name": "user-info",
+      "headerToolbar": [
+        {
+          "type": "button",
+          "align": "left",
+          "label": "退出登录",
+          "level": "danger",
+          "blank": false,
+          "actionType": "dialog",
+          "dialog": {
+            "type": "dialog",
+            "title": "系统提示",
+            "closeOnOutside": true,
+            "closeOnEsc": true,
+            "showErrorMsg": false,
+            "body": [
+              {
+                "type": "tpl",
+                "tpl": "<div><p style='color:red; font-size:15px; font-family:Arial;'>退出后需重新登录, 确定进行?</p></div>"
+              }
+            ],
+            "actions": [
+              {
+                "label": "确定",
+                "actionType": "ajax",
+                "level": "primary",
+                "type": "button",
+                "api": {
+                  "method": "get",
+                  "url": "${API_HOST}/user/exit"
+                },
+                "redirect": "http://127.0.0.1:3000/login"
+              }
+            ]
+          }
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "draggable": false,
+          "icon": "fas fa-cog",
+          "overlay": true,
+          "footerBtnSize": "sm"
+        }
+      ],
+      "api": {
+        "url": "${API_HOST}/user/info",
+        "method": "get"
+      },
+      "columns": [
+        {
+          "name": "userName",
+          "label": "用户名",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "role",
+          "label": "角色",
+          "labelClassName": "font-black",
+          "align": "center",
+          "classNameExpr": "<%= data.role === '管理员' ? 'text-info' : '' %>"
+        },
+        {
+          "name": "state",
+          "label": "状态",
+          "labelClassName": "font-black",
+          "align": "center",
+          "classNameExpr": "<%= data.state === '已启用' ? 'text-info' : 'text-danger' %>"
+        },
+        {
+          "name": "createTime",
+          "label": "创建时间",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "type": "operation",
+          "label": "操作",
+          "labelClassName": "font-bold",
+          "align": "center",
+          "buttons": [
+            {
+              "type": "button",
+              "label": "修改密码",
+              "size": "md",
+              "level": "primary",
+              "actionType": "dialog",
+              "dialog": {
+                "type": "dialog",
+                "title": "密码修改",
+                "closeOnOutside": true,
+                "closeOnEsc": true,
+                "showErrorMsg": false,
+                "body": [
+                  {
+                    "type": "form",
+                    "title": "表单",
+                    "redirect": "http://127.0.0.1:3000/login",
+                    "api": {
+                      "method": "post",
+                      "url": "${API_HOST}/user/changePass",
+                      "dataType": "form-data",
+                      "data": {
+                        "oldPass": "${oldPass}",
+                        "newPass": "${newPass}"
+                      },
+                      "messages": {
+                        "success": "密码修改成功"
+                      },
+                      "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
+                    },
+                    "rules": [
+                      {
+                        "rule": "data.newPass === data.newPassConfirm",
+                        "message": "两次输入的新密码不同"
+                      }
+                    ],
+                    "body": [
+                      {
+                        "label": "旧密码",
+                        "type": "input-password",
+                        "name": "oldPass",
+                        "required": true
+                      },
+                      {
+                        "label": "新密码",
+                        "type": "input-password",
+                        "name": "newPass",
+                        "required": true
+                      },
+                      {
+                        "label": "确认新密码",
+                        "type": "input-password",
+                        "name": "newPassConfirm",
+                        "required": true
+                      }
+                    ]
+                  }
+                ],
+                "actions": [
+                  {
+                    "type": "submit",
+                    "label": "提交",
+                    "actionType": "submit",
+                    "required": [
+                      "oldpass",
+                      "newpass1"
+                    ],
+                    "level": "info"
+                  }
+                ]
+              }
+            }
+          ],
+          "placeholder": "-",
+          "fixed": "right"
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "暂无数据",
+      "tableClassName": "table-db table-striped",
+      "headerClassName": "crud-table-header",
+      "footerClassName": "crud-table-footer",
+      "toolbarClassName": "crud-table-toolbar",
+      "combineNum": 0,
+      "bodyClassName": "panel-default"
+    }
+  ]
+}

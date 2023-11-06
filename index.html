@@ -52,6 +52,8 @@
         const history = History.createBrowserHistory();
         // const history = History.createHashHistory();
 
+        var role = 1;
+
         $.ajax({
           async: false,
           url: `${API_HOST}/auth`,
@@ -63,9 +65,13 @@
           },
           //请求成功且返回值为未登录
           success: function(response) {
+            if (response.status === 9010){
+              alert("账户已停用，请联系管理员");
+            }
             if(response.status !== 200){
               window.location.href= `${AMIS_HOST}/login`;
             }
+            role = response.data;
           },
           //请求失败(无法获取后端服务或网络有问题等)
           error: function(jqXHR, textStatus, errorThrown) {
@@ -77,9 +83,7 @@
         let amis = amisRequire('amis/embed');
         const match = amisRequire('path-to-regexp').match;
 
-
-
-        const app = {
+        const user = {
           type: 'app',
           brandName: '集群管理系统',
           logo: '/public/logo.png',
@@ -91,7 +95,22 @@
           // footer: '<div class="p-2 text-center bg-light">底部区域</div>',
           // asideBefore: '<div class="p-2 text-center">菜单前面区域</div>',
           // asideAfter: '<div class="p-2 text-center">菜单后面区域</div>',
-          api: '/pages/site.json'
+          api: '/pages/user/site.json'
+        };
+
+        const admin = {
+          type: 'app',
+          brandName: '集群管理系统',
+          logo: '/public/logo.png',
+          header: {
+            type: 'tpl',
+            inline: false,
+            className: 'w-full',
+          },
+          // footer: '<div class="p-2 text-center bg-light">底部区域</div>',
+          // asideBefore: '<div class="p-2 text-center">菜单前面区域</div>',
+          // asideAfter: '<div class="p-2 text-center">菜单后面区域</div>',
+          api: "/pages/admin/site.json"
         };
 
         function normalizeLink(to, location = history.location) {
@@ -154,98 +173,198 @@
           return decodeURI(pathname) === link;
         }
 
-        let amisInstance = amis.embed(
-          '#root',
-          app,
-          {
-            location: history.location,
-            data: {
-              // 全局数据，是受控的数据
-            },
-            context: {
-              // 全局上下文数据, 非受控的数据，无论哪一层都能获取到，包括弹窗自定义数据映射后都能获取到。
-              // 可以用来放一下全局配置等。比如 API_HOST, 这样页面配置里面可以通过 ${API_HOST} 来获取到。
-              // 仅对AMIS页面生效
-              API_HOST: API_HOST,
-              AMIS_HOST: AMIS_HOST
-            }
-          },
-          {
-
-            //全局配置函数，设置请求适配器和接收适配器
-            requestAdaptor(api, context){
-              api.headers.Authorization = localStorage.getItem("amis_token");
-              return api;
-            },
-
-            responseAdaptor(api, payload, query, request, response) {
-              if(payload.status === 200){
-                payload.status = 0;
-                payload.msg = payload.message;
-                delete payload.message;
-              }
-              return payload;
-            },
 
 
-            // watchRouteChange: fn => {
-            //   return history.listen(fn);
-            // },
-            updateLocation: (location, replace) => {
-              location = normalizeLink(location);
-              if (location === 'goBack') {
-                return history.goBack();
-              } else if (
-                (!/^https?\:\/\//.test(location) &&
-                  location ===
-                    history.location.pathname + history.location.search) ||
-                location === history.location.href
-              ) {
-                // 目标地址和当前地址一样，不处理，免得重复刷新
-                return;
-              } else if (/^https?\:\/\//.test(location) || !history) {
-                return (window.location.href = location);
-              }
+        if (role === 0){
+          amisInstance = amis.embed(
+                  '#root',
+                  admin,
+                  {
+                    location: history.location,
+                    data: {
+                      // 全局数据，是受控的数据
+                    },
+                    context: {
+                      // 全局上下文数据, 非受控的数据，无论哪一层都能获取到，包括弹窗自定义数据映射后都能获取到。
+                      // 可以用来放一下全局配置等。比如 API_HOST, 这样页面配置里面可以通过 ${API_HOST} 来获取到。
+                      // 仅对AMIS页面生效
+                      API_HOST: API_HOST,
+                      AMIS_HOST: AMIS_HOST
+                    }
+                  },
+                  {
 
-              history[replace ? 'replace' : 'push'](location);
-            },
-            jumpTo: (to, action) => {
-              if (to === 'goBack') {
-                return history.goBack();
-              }
+                    //全局配置函数，设置请求适配器和接收适配器
+                    requestAdaptor(api, context){
+                      api.headers.Authorization = localStorage.getItem("amis_token");
+                      return api;
+                    },
 
-              to = normalizeLink(to);
+                    responseAdaptor(api, payload, query, request, response) {
+                      if(payload.status === 200){
+                        payload.status = 0;
+                        payload.msg = payload.message;
+                        delete payload.message;
+                      }
+                      return payload;
+                    },
 
-              if (isCurrentUrl(to)) {
-                return;
-              }
 
-              if (action && action.actionType === 'url') {
-                action.blank === false
-                  ? (window.location.href = to)
-                  : window.open(to, '_blank');
-                return;
-              } else if (action && action.blank) {
-                window.open(to, '_blank');
-                return;
-              }
+                    // watchRouteChange: fn => {
+                    //   return history.listen(fn);
+                    // },
+                    updateLocation: (location, replace) => {
+                      location = normalizeLink(location);
+                      if (location === 'goBack') {
+                        return history.goBack();
+                      } else if (
+                              (!/^https?\:\/\//.test(location) &&
+                                      location ===
+                                      history.location.pathname + history.location.search) ||
+                              location === history.location.href
+                      ) {
+                        // 目标地址和当前地址一样，不处理，免得重复刷新
+                        return;
+                      } else if (/^https?\:\/\//.test(location) || !history) {
+                        return (window.location.href = location);
+                      }
 
-              if (/^https?:\/\//.test(to)) {
-                window.location.href = to;
-              } else if (
-                (!/^https?\:\/\//.test(to) &&
-                  to === history.pathname + history.location.search) ||
-                to === history.location.href
-              ) {
-                // do nothing
-              } else {
-                history.push(to);
-              }
-            },
-            isCurrentUrl: isCurrentUrl,
-            theme: 'antd'
-          }
-        );
+                      history[replace ? 'replace' : 'push'](location);
+                    },
+                    jumpTo: (to, action) => {
+                      if (to === 'goBack') {
+                        return history.goBack();
+                      }
+
+                      to = normalizeLink(to);
+
+                      if (isCurrentUrl(to)) {
+                        return;
+                      }
+
+                      if (action && action.actionType === 'url') {
+                        action.blank === false
+                                ? (window.location.href = to)
+                                : window.open(to, '_blank');
+                        return;
+                      } else if (action && action.blank) {
+                        window.open(to, '_blank');
+                        return;
+                      }
+
+                      if (/^https?:\/\//.test(to)) {
+                        window.location.href = to;
+                      } else if (
+                              (!/^https?\:\/\//.test(to) &&
+                                      to === history.pathname + history.location.search) ||
+                              to === history.location.href
+                      ) {
+                        // do nothing
+                      } else {
+                        history.push(to);
+                      }
+                    },
+                    isCurrentUrl: isCurrentUrl,
+                    theme: 'antd'
+                  }
+          );
+        }
+        else {
+          amisInstance = amis.embed(
+                  '#root',
+                  user,
+                  {
+                    location: history.location,
+                    data: {
+                      // 全局数据，是受控的数据
+                    },
+                    context: {
+                      // 全局上下文数据, 非受控的数据，无论哪一层都能获取到，包括弹窗自定义数据映射后都能获取到。
+                      // 可以用来放一下全局配置等。比如 API_HOST, 这样页面配置里面可以通过 ${API_HOST} 来获取到。
+                      // 仅对AMIS页面生效
+                      API_HOST: API_HOST,
+                      AMIS_HOST: AMIS_HOST
+                    }
+                  },
+                  {
+
+                    //全局配置函数，设置请求适配器和接收适配器
+                    requestAdaptor(api, context){
+                      api.headers.Authorization = localStorage.getItem("amis_token");
+                      return api;
+                    },
+
+                    responseAdaptor(api, payload, query, request, response) {
+                      if(payload.status === 200){
+                        payload.status = 0;
+                        payload.msg = payload.message;
+                        delete payload.message;
+                      }
+                      return payload;
+                    },
+
+
+                    // watchRouteChange: fn => {
+                    //   return history.listen(fn);
+                    // },
+                    updateLocation: (location, replace) => {
+                      location = normalizeLink(location);
+                      if (location === 'goBack') {
+                        return history.goBack();
+                      } else if (
+                              (!/^https?\:\/\//.test(location) &&
+                                      location ===
+                                      history.location.pathname + history.location.search) ||
+                              location === history.location.href
+                      ) {
+                        // 目标地址和当前地址一样，不处理，免得重复刷新
+                        return;
+                      } else if (/^https?\:\/\//.test(location) || !history) {
+                        return (window.location.href = location);
+                      }
+
+                      history[replace ? 'replace' : 'push'](location);
+                    },
+                    jumpTo: (to, action) => {
+                      if (to === 'goBack') {
+                        return history.goBack();
+                      }
+
+                      to = normalizeLink(to);
+
+                      if (isCurrentUrl(to)) {
+                        return;
+                      }
+
+                      if (action && action.actionType === 'url') {
+                        action.blank === false
+                                ? (window.location.href = to)
+                                : window.open(to, '_blank');
+                        return;
+                      } else if (action && action.blank) {
+                        window.open(to, '_blank');
+                        return;
+                      }
+
+                      if (/^https?:\/\//.test(to)) {
+                        window.location.href = to;
+                      } else if (
+                              (!/^https?\:\/\//.test(to) &&
+                                      to === history.pathname + history.location.search) ||
+                              to === history.location.href
+                      ) {
+                        // do nothing
+                      } else {
+                        history.push(to);
+                      }
+                    },
+                    isCurrentUrl: isCurrentUrl,
+                    theme: 'antd'
+                  }
+          );
+        }
+
+
 
         history.listen(state => {
           amisInstance.updateProps({

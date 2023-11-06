@@ -1,54 +1,19 @@
 {
   "type": "page",
-  "name": "page-namespace-list",
+  "name": "page-deployment-list",
   "body": [
     {
       "type": "button",
-      "label": "创建Namespace",
+      "label": "创建Deployment",
+      "icon": "fas fa-plus",
       "size": "md",
       "level": "primary",
-      "actionType": "dialog",
-      "dialog": {
-        "type": "dialog",
-        "title": "创建Namespace",
-        "closeOnEsc": true,
-        "body": [
-          {
-            "type": "form",
-            "title": "表单",
-            "api": {
-              "method": "get",
-              "url": "${API_HOST}/namespace/add",
-              "data": {
-                "name": "${name}"
-              }
-            },
-            "body": [
-              {
-                "label": "名称",
-                "type": "input-text",
-                "name": "name",
-                "required": true
-              }
-            ]
-          }
-        ],
-        "actions": [
-          {
-            "type": "submit",
-            "label": "创建",
-            "actionType": "submit",
-            "required": [
-              "name"
-            ],
-            "level": "info"
-          }
-        ]
-      }
+      "actionType": "link",
+      "link": "/deployments/new"
     },
     {
       "type": "crud",
-      "name": "namespace-list",
+      "name": "deployment-list",
       "headerToolbar": [
         {
           "type": "reload",
@@ -68,7 +33,7 @@
         }
       ],
       "api": {
-        "url": "${API_HOST}/namespace/search/all",
+        "url": "${API_HOST}/deployment/search/all",
         "method": "get"
       },
       "columns": [
@@ -85,16 +50,32 @@
           "align": "center"
         },
         {
-          "name": "status",
-          "label": "状态",
+          "name": "updatedReplicas",
+          "label": "副本数",
+          "labelClassName": "font-bold",
+          "align": "center",
+          "remark": {
+            "content": "若为0表示正在创建中",
+            "placement": "top"
+          }
+        },
+        {
+          "name": "readyReplicas",
+          "label": "可用副本数",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
+          "name": "namespace",
+          "align": "center",
+          "label": "命名空间(Namespace)",
+          "labelClassName": "font-bold"
+        },
+        {
           "type": "operation",
           "label": "操作",
-          "labelClassName": "font-bold",
           "align": "center",
+          "labelClassName": "font-bold",
           "width": "",
           "buttons": [
             {
@@ -105,22 +86,23 @@
                   "label": "查看详情",
                   "level": "primary",
                   "actionType": "link",
-                  "link": "/namespace/$name"
+                  "link": "/deployment/${namespace}/${name}"
                 },
                 {
                   "type": "button",
                   "label": "删除",
                   "level": "danger",
                   "actionType": "ajax",
-                  "confirmText": "此操作将会删除$name下所有资源，确定进行？",
+                  "confirmText": "此操作将会删除${namespace}下的${name}，不可恢复，确定进行？",
                   "api": {
                     "method": "get",
-                    "url": "${API_HOST}/namespace/delete",
+                    "url": "${API_HOST}/deployment/delete",
                     "data": {
-                      "name": "${name}"
+                      "deploymentName": "${name}",
+                      "namespaceName": "${namespace}"
                     }
                   },
-                  "reload": "namespace-list"
+                  "reload": "deployment-list"
                 }
               ]
             }

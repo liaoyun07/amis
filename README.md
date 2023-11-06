@@ -17,3 +17,5 @@ npm start
 ## 部署上线
 
 这个例子中的 amis 等依赖使用外部 cdn，为了稳定请在自己部署的时候将文件下载到本地。
+
+1. 若是修改了前端的访问地址, 同步修改/pages/user/peer.json和/pages/admin/peer.json中 "redirect"的地址(组件原因，无法用全局变量配置)

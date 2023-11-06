@@ -1,0 +1,132 @@
+{
+  "type": "page",
+  "name": "page-user-list",
+  "body": [
+    {
+      "type": "crud",
+      "name": "user-list",
+      "headerToolbar": [
+        {
+          "type": "reload",
+          "align": "left",
+          "icon": "iconfont icon-refresh",
+          "label": "刷新",
+          "tooltip": "",
+          "level": "primary"
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "draggable": false,
+          "icon": "fas fa-cog",
+          "overlay": true,
+          "footerBtnSize": "sm"
+        }
+      ],
+      "api": {
+        "url": "${API_HOST}/user/all",
+        "method": "get"
+      },
+      "columns": [
+        {
+          "name": "userName",
+          "label": "用户名",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "role",
+          "label": "角色",
+          "labelClassName": "font-black",
+          "align": "center",
+          "classNameExpr": "<%= data.role === '管理员' ? 'text-info' : '' %>"
+        },
+        {
+          "name": "state",
+          "label": "状态",
+          "labelClassName": "font-black",
+          "align": "center",
+          "classNameExpr": "<%= data.state === '已启用' ? 'text-info' : 'text-danger' %>"
+        },
+        {
+          "name": "createTime",
+          "label": "创建时间",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "type": "operation",
+          "label": "操作",
+          "align": "center",
+          "labelClassName": "font-bold",
+          "width": "",
+          "buttons": [
+            {
+              "type": "button-group",
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "禁用",
+                  "level": "primary",
+                  "visibleOn": "${state === '已启用'}",
+                  "actionType": "ajax",
+                  "confirmText": "此操作将会禁止用户${userName}的所有权限(其资源仍然保留)，确定进行？",
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/user/changeState",
+                    "data": {
+                      "userName": "${userName}"
+                    }
+                  },
+                  "reload": "user-list"
+                },
+                {
+                  "type": "button",
+                  "label": "启用",
+                  "level": "primary",
+                  "visibleOn": "${state !== '已启用'}",
+                  "actionType": "ajax",
+                  "confirmText": "此操作将会恢复用户${userName}的所有权限，确定进行？",
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/user/changeState",
+                    "data": {
+                      "userName": "${userName}"
+                    }
+                  },
+                  "reload": "user-list"
+                },
+                {
+                  "type": "button",
+                  "label": "删除",
+                  "level": "danger",
+                  "actionType": "ajax",
+                  "confirmText": "此操作将会删除用户${userName}，其资源将会被管理员回收，确定进行？",
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/user/delete",
+                    "data": {
+                      "userName": "${userName}"
+                    }
+                  },
+                  "reload": "user-list"
+                }
+              ]
+            }
+          ],
+          "placeholder": "-",
+          "fixed": "right"
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "暂无数据",
+      "tableClassName": "table-db table-striped",
+      "headerClassName": "crud-table-header",
+      "footerClassName": "crud-table-footer",
+      "toolbarClassName": "crud-table-toolbar",
+      "combineNum": 0,
+      "bodyClassName": "panel-default"
+    }
+  ]
+}

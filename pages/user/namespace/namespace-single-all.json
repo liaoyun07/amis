@@ -1,0 +1,34 @@
+{
+  "type": "page",
+  "title": "${params.name}",
+  "remark": null,
+  "initApi": {
+    "url": "${API_HOST}/namespace/search/single",
+    "data": {
+      "name": "${params.name}"
+    },
+    "method": "get",
+    "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
+  },
+  "toolbar": [
+    {
+      "type": "button",
+      "actionType": "link",
+      "link": "/namespace",
+      "label": "返回Namespace列表",
+      "level": "primary",
+      "size": "lg"
+    }
+  ],
+  "body": [
+    {
+      "type": "control",
+      "name": "response",
+      "body": {
+        "type": "json",
+        "jsonTheme": "eighties",
+        "levelExpand": 100
+      }
+    }
+  ]
+}
