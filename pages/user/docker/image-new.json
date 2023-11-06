@@ -1,0 +1,67 @@
+{
+  "type": "page",
+  "title": "创建镜像",
+  "toolbar": [
+    {
+      "type": "button",
+      "actionType": "link",
+      "link": "/image/list",
+      "label": "返回镜像列表",
+      "level": "primary"
+    }
+  ],
+  "preventEnterSubmit": true,
+  "body": [
+    {
+      "type": "form",
+      "title": "表单提交",
+      "reload": "result?log=${response}",
+      "api": {
+        "url" : "${API_HOST}/image/build",
+        "messages": {
+          "success": "镜像创建成功!"
+        },
+        "method": "post",
+        "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
+      },
+      "actions": [
+        {
+          "type": "submit",
+          "label": "创建",
+          "level": "primary"
+        }
+      ],
+      "body": [
+        {
+          "type": "input-text",
+          "name": "imageName",
+          "label": "镜像名称"
+        },
+        {
+          "type": "input-file",
+          "name": "files",
+          "label": "文件",
+          "accept": "*",
+          "multiple": true,
+          "drag": true,
+          "asBlob": true
+        }
+      ]
+    },
+    {
+      "type": "form",
+      "title": "执行日志",
+      "name": "result",
+      "actions": [],
+      "body": [
+        {
+          "type": "tpl",
+          "tpl": "${log|raw}",
+          "style": {
+            "whiteSpace": "pre-wrap"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -15,7 +15,7 @@
     "admin",
     "react"
   ],
-  "author": "fex",
+  "author": "lv",
   "license": "MIT",
   "devDependencies": {
     "body-parser": "^1.19.0",

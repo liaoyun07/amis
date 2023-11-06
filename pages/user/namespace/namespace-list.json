@@ -1,18 +1,55 @@
 {
   "type": "page",
-  "name": "page-service-list",
+  "name": "page-namespace-list",
   "body": [
     {
       "type": "button",
-      "label": "创建Service",
+      "label": "创建Namespace",
+      "icon": "fas fa-plus",
       "size": "md",
       "level": "primary",
-      "actionType": "link",
-      "link": "/service/new"
+      "actionType": "dialog",
+      "dialog": {
+        "type": "dialog",
+        "title": "创建Namespace",
+        "closeOnEsc": true,
+        "body": [
+          {
+            "type": "form",
+            "title": "表单",
+            "api": {
+              "method": "get",
+              "url": "${API_HOST}/namespace/add",
+              "data": {
+                "name": "${name}"
+              }
+            },
+            "body": [
+              {
+                "label": "名称",
+                "type": "input-text",
+                "name": "name",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "type": "submit",
+            "label": "创建",
+            "actionType": "submit",
+            "required": [
+              "name"
+            ],
+            "level": "info"
+          }
+        ]
+      }
     },
     {
       "type": "crud",
-      "name": "service-list",
+      "name": "namespace-list",
       "headerToolbar": [
         {
           "type": "reload",
@@ -32,7 +69,7 @@
         }
       ],
       "api": {
-        "url": "${API_HOST}/service/search/all",
+        "url": "${API_HOST}/namespace/search/all",
         "method": "get"
       },
       "columns": [
@@ -49,20 +86,8 @@
           "align": "center"
         },
         {
-          "name": "type",
-          "label": "端口类型",
-          "labelClassName": "font-bold",
-          "align": "center"
-        },
-        {
-          "name": "ports",
-          "label": "源端口:目的端口",
-          "labelClassName": "font-bold",
-          "align": "center"
-        },
-        {
-          "name": "namespace",
-          "label": "命名空间(Namespace)",
+          "name": "status",
+          "label": "状态",
           "labelClassName": "font-bold",
           "align": "center"
         },
@@ -81,23 +106,22 @@
                   "label": "查看详情",
                   "level": "primary",
                   "actionType": "link",
-                  "link": "/service/${namespace}/${name}"
+                  "link": "/namespace/$name"
                 },
                 {
                   "type": "button",
                   "label": "删除",
                   "level": "danger",
                   "actionType": "ajax",
-                  "confirmText": "此操作将会删除${namespace}下的${name}，不可恢复，确定进行？",
+                  "confirmText": "此操作将会删除$name下所有资源，确定进行？",
                   "api": {
                     "method": "get",
-                    "url": "${API_HOST}/service/delete",
+                    "url": "${API_HOST}/namespace/delete",
                     "data": {
-                      "serviceName": "${name}",
-                      "namespaceName": "${namespace}"
+                      "name": "${name}"
                     }
                   },
-                  "reload": "service-list"
+                  "reload": "namespace-list"
                 }
               ]
             }

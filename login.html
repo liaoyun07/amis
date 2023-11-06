@@ -44,12 +44,35 @@
         }
 
         .login-button{
-            display: block;
-            margin: auto;
-            position: relative;
-            left: 133px;
+            /*display: block;*/
+            /*margin: auto;*/
+            /*position: relative;*/
+            /*left: 133px;*/
             width: 75px; /* 自定义宽度 */
             height: 30px; /* 自定义高度 */
+        }
+
+        .button-registry{
+            width: 75px; /* 自定义宽度 */
+            height: 30px; /* 自定义高度 */
+        }
+
+        .button-submit{
+            width: 75px; /* 自定义宽度 */
+            height: 35px; /* 自定义高度 */
+        }
+
+        /*.button-group {*/
+        /*    */
+        /*}*/
+        .amis-scope .cxd-ButtonGroup {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .amis-scope .cxd-ButtonGroup > .cxd-Button {
+            max-width: 200px;
+            overflow: auto;
         }
 
     </style>
@@ -64,8 +87,8 @@
         //API_HOST是后端服务地址
         //AMIS_HOST是前端服务地址
         //注意：在字符串中使用时字符串用反引号``而非单引号''才能生效
-        const API_HOST = 'http://localhost:8081';
-        const AMIS_HOST = 'http://localhost:3000';
+        const API_HOST = 'http://127.0.0.1:8080';
+        const AMIS_HOST = 'http://127.0.0.1:3000';
 
 
         let amis = amisRequire('amis/embed');
@@ -105,9 +128,9 @@
                     valign: "auto",
                     mode: 'horizontal',
                     title: "",
-                    persistData: "user",
+                    // persistData: "user",
                     api: {
-                        url: `${API_HOST}/login`,
+                        url: `${API_HOST}/user/login`,
                         method: "post",
                         // dataType: "form-data",
                         data:{
@@ -121,6 +144,10 @@
                                 payload.msg = payload.message;
                                 delete payload.message;
                             }
+                            else if (payload.status === 9000){
+                                payload.msg = payload.message;
+                                delete payload.message;
+                            }
                             return payload;
                         },
                         // requestAdaptor(api) {
@@ -128,7 +155,7 @@
                         // }
                     },
                     panelClassName: "p-r p-l p-b-md",
-                    redirect: "/home",
+                    redirect: `${AMIS_HOST}/home`,
                     body: [
                         {
                         "type": "tpl",
@@ -162,32 +189,102 @@
                                 "icon": "fa fa-lock"
                             },
                         },
-                        // {
-                        //     type: "checkbox",
-                        //     label: false,
-                        //     name: "record",
-                        //     option: "记住密码"
-                        // },
                         {
-                            type: "button",
-                            level: "primary",
-                            actionType: "submit",
-                            size: "lg",
-                            block: false,
-                            label: "登录",
-                            className: "login-button"
-
-                            // type: "control",
-                            // label: false,
-                            // body: {
-                            //     "type": "button",
-                            //     "level": "primary",
-                            //     "actionType": "submit",
-                            //     "size": "lg",
-                            //     "block": false,
-                            //     "label": "登录"
-                            // }
+                            type: "checkbox",
+                            label: false,
+                            name: "record",
+                            option: "记住密码"
+                        },
+                        {
+                            "type": "button-group",
+                            "className": "button-group",
+                            "buttons": [
+                                {
+                                    type: "button",
+                                    level: "primary",
+                                    actionType: "submit",
+                                    size: "lg",
+                                    block: false,
+                                    label: "登录",
+                                    className: "login-button"
+                                },
+                                {
+                                    "type": "button",
+                                    "level": "primary",
+                                    "className": "button-registry",
+                                    "label": "注册",
+                                    "actionType": "dialog",
+                                    "dialog": {
+                                        "type": "dialog",
+                                        "title": "账号注册",
+                                        "closeOnOutside": true,
+                                        "closeOnEsc": true,
+                                        "showErrorMsg": false,
+                                        "body": [
+                                            {
+                                                "type": "form",
+                                                "title": "表单",
+                                                "api": {
+                                                    "method": "post",
+                                                    "url": `${API_HOST}/user/register`,
+                                                    "dataType": "form-data",
+                                                    "data": {
+                                                        "userName": "${userName}",
+                                                        "password": "${pass}"
+                                                    },
+                                                    "messages": {
+                                                        "success": "注册成功"
+                                                    },
+                                                    "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
+                                                },
+                                                "rules": [
+                                                    {
+                                                        "rule": "data.pass === data.passConfirm",
+                                                        "message": "两次输入的密码不同"
+                                                    }
+                                                ],
+                                                "body": [
+                                                    {
+                                                        "label": "用户名",
+                                                        "type": "input-text",
+                                                        "name": "userName",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "label": "密码",
+                                                        "type": "input-password",
+                                                        "name": "pass",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "label": "确认密码",
+                                                        "type": "input-password",
+                                                        "name": "passConfirm",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "redirect": `${AMIS_HOST}/login`,
+                                            }
+                                        ],
+                                        "actions": [
+                                            {
+                                                "type": "submit",
+                                                "label": "立即注册",
+                                                "className": "button-submit",
+                                                "actionType": "submit",
+                                                "required": [
+                                                    "userName",
+                                                    "pass",
+                                                    "passConfirm"
+                                                ],
+                                                "level": "info"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
                         }
+
                     ]
                 }
 
@@ -209,13 +306,6 @@
             }
 
         );
-
-
-        // history.listen(state => {
-        //     amisInstance.updateProps({
-        //         location: state.location || state
-        //     });
-        // });
 
 
     })();

@@ -1,0 +1,108 @@
+{
+  "type": "page",
+  "name": "page-image-list",
+  "body": [
+    {
+      "type": "button",
+      "label": "创建镜像",
+      "icon": "fas fa-plus",
+      "size": "md",
+      "level": "primary",
+      "actionType": "link",
+      "link": "/images/new"
+    },
+    {
+      "type": "crud",
+      "name": "image-list",
+      "headerToolbar": [
+        {
+          "type": "reload",
+          "align": "left",
+          "icon": "iconfont icon-refresh",
+          "label": "刷新",
+          "tooltip": "",
+          "level": "primary"
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "draggable": false,
+          "icon": "fas fa-cog",
+          "overlay": true,
+          "footerBtnSize": "sm"
+        }
+      ],
+      "api": {
+        "url": "${API_HOST}/image/list",
+        "method": "get"
+      },
+      "columns": [
+        {
+          "name": "user",
+          "label": "用户",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "image",
+          "label": "名称",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "createTime",
+          "label": "创建时间",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "type": "operation",
+          "label": "操作",
+          "labelClassName": "font-bold",
+          "align": "center",
+          "width": "",
+          "buttons": [
+            {
+              "type": "button-group",
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "查看详情",
+                  "level": "primary",
+                  "actionType": "link",
+                  "link": "/image/${image}"
+                },
+                {
+                  "type": "button",
+                  "label": "删除",
+                  "level": "danger",
+                  "actionType": "ajax",
+                  "confirmText": "此操作将会删除镜像${image}，确定进行？",
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/image/delete",
+                    "data": {
+                      "image": "${image}"
+                    }
+                  },
+                  "reload": "image-list"
+                }
+              ]
+            }
+          ],
+          "placeholder": "-",
+          "fixed": "right"
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "暂无数据",
+      "tableClassName": "table-db table-striped",
+      "headerClassName": "crud-table-header",
+      "footerClassName": "crud-table-footer",
+      "toolbarClassName": "crud-table-toolbar",
+      "combineNum": 1,
+      "bodyClassName": "panel-default"
+    }
+  ]
+}

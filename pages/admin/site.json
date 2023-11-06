@@ -1,0 +1,114 @@
+{
+  "status": 0,
+  "msg": "",
+  "data": {
+    "pages": [
+      {
+        "url": "/",
+        "redirect": "/home"
+      },
+      {
+        "children": [
+          {
+            "label": "主页",
+            "url": "/home",
+            "schemaApi": "get:/pages/admin/home/home-page.json"
+          }
+        ]
+      },
+      {
+        "label": "集群管理",
+        "children": [
+          {
+            "label": "Node",
+            "url": "/node",
+            "schemaApi": "get:/pages/admin/node/node-list.json"
+          },
+          {
+            "label": "Node详情",
+            "url": "/node/:name",
+            "schemaApi": "get:/pages/admin/node/node-single-all.json"
+          },
+          {
+            "label": "Namespace",
+            "url": "/namespace",
+            "schemaApi": "get:/pages/admin/namespace/namespace-list.json"
+          },
+          {
+            "label": "Namespace详情",
+            "url": "/namespace/:name",
+            "schemaApi": "get:/pages/admin/namespace/namespace-single-all.json"
+          },
+          {
+            "label": "Service",
+            "url": "/service",
+            "schemaApi": "get:/pages/admin/service/service-list.json"
+          },
+          {
+            "label": "Service详情",
+            "url": "/service/:namespace/:name",
+            "schemaApi": "get:/pages/admin/service/service-single-all.json"
+          },
+          {
+            "label": "创建Service",
+            "url": "/services/new",
+            "schemaApi": "get:/pages/admin/service/service-new.json",
+            "hidden": true
+          },
+          {
+            "label": "Deployment",
+            "url": "/deployment",
+            "schemaApi": "get:/pages/admin/deployment/deployment-list.json"
+          },
+          {
+            "label": "Deployment详情",
+            "url": "/deployment/:namespace/:name",
+            "schemaApi": "get:/pages/admin/deployment/deployment-single-all.json"
+          },
+          {
+            "label": "创建Deployment",
+            "url": "/deployments/new",
+            "schemaApi": "get:/pages/admin/deployment/deployment-new.json",
+            "hidden": true
+          }
+        ]
+      },
+      {
+        "label": "镜像仓库",
+        "children": [
+          {
+            "label": "Image",
+            "url": "/image/list",
+            "schemaApi": "get:/pages/admin/docker/image-list.json"
+          },
+          {
+            "label": "Image详情",
+            "url": "/image/:image",
+            "schemaApi": "get:/pages/admin/docker/image-detail.json"
+          },
+          {
+            "label": "创建镜像",
+            "url": "/images/new",
+            "schemaApi": "get:/pages/admin/docker/image-new.json",
+            "hidden": true
+          }
+        ]
+      },
+      {
+        "label": "账号管理",
+        "children": [
+          {
+            "label": "用户管理",
+            "url": "/user/manage",
+            "schemaApi": "get:/pages/admin/user/manage.json"
+          },
+          {
+            "label": "个人中心",
+            "url": "/user/info",
+            "schemaApi": "get:/pages/admin/user/peer.json"
+          }
+        ]
+      }
+    ]
+  }
+}
