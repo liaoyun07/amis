@@ -44,7 +44,6 @@
                 {
                   "name": "tcp-app",
                   "image": "192.168.3.151:5000/tcp",
-                  "imagePullPolicy": "IfNotPresent",
                   "ports": [
                     {
                       "containerPort": 9999,
@@ -186,7 +185,6 @@
                           "required": [
                             "name",
                             "image",
-                            "imagePullPolicy",
                             "ports"
                           ],
                           "properties": {
@@ -197,10 +195,6 @@
                             "image": {
                               "type": "string",
                               "title": "image"
-                            },
-                            "imagePullPolicy": {
-                              "type": "string",
-                              "title": "imagePullPolicy"
                             },
                             "ports": {
                               "type": "array",

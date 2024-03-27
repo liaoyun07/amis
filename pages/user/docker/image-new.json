@@ -19,7 +19,7 @@
       "api": {
         "url" : "${API_HOST}/image/build",
         "messages": {
-          "success": "镜像创建成功!"
+          "success": "镜像创建请求已提交，请至镜像列表查询!"
         },
         "method": "post",
         "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
@@ -35,7 +35,8 @@
         {
           "type": "input-text",
           "name": "imageName",
-          "label": "镜像名称"
+          "label": "镜像名称",
+          "size": "sm"
         },
         {
           "type": "input-file",
@@ -45,21 +46,6 @@
           "multiple": true,
           "drag": true,
           "asBlob": true
-        }
-      ]
-    },
-    {
-      "type": "form",
-      "title": "执行日志",
-      "name": "result",
-      "actions": [],
-      "body": [
-        {
-          "type": "tpl",
-          "tpl": "${log|raw}",
-          "style": {
-            "whiteSpace": "pre-wrap"
-          }
         }
       ]
     }

@@ -50,6 +50,13 @@
           "align": "center"
         },
         {
+          "name": "status",
+          "label": "状态",
+          "labelClassName": "font-bold",
+          "align": "center",
+          "classNameExpr": "<%= data.status === '可部署' ? 'text-info' : 'text-danger' %>"
+        },
+        {
           "name": "createTime",
           "label": "创建时间",
           "labelClassName": "font-bold",
@@ -67,15 +74,9 @@
               "buttons": [
                 {
                   "type": "button",
-                  "label": "查看详情",
-                  "level": "primary",
-                  "actionType": "link",
-                  "link": "/image/${image}"
-                },
-                {
-                  "type": "button",
                   "label": "删除",
                   "level": "danger",
+                  "visibleOn": "${status === '可部署'}",
                   "actionType": "ajax",
                   "confirmText": "此操作将会删除镜像${image}，确定进行？",
                   "api": {
