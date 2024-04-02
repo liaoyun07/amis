@@ -8,99 +8,197 @@
         "redirect": "/home"
       },
       {
+        "label": "云边端协同数据流处理",
         "children": [
           {
-            "label": "主页",
+            "label": "任务训练管理模块",
+            "url": "index",
+            "schema": {
+              "type": "page",
+              "title": "页面A",
+              "body": "页面A"
+            },
+            "children": [
+              {
+                "label": "任务创建",
+                "url": "1",
+                "schema": {
+                  "type": "page",
+                  "title": "页面A-1",
+                  "body": "页面A-1"
+                }
+              },
+              {
+                "label": "任务修改",
+                "url": "2",
+                "schema": {
+                  "type": "page",
+                  "title": "页面A-2",
+                  "body": "页面A-2"
+                }
+              },
+              {
+                "label": "任务调度",
+                "url": "3",
+                "schema": {
+                  "type": "page",
+                  "title": "页面A-3",
+                  "body": "页面A-3"
+                }
+              }
+            ]
+          },
+          {
+            "label": "计算执行模块",
+            "url": "com",
+            "schema": {
+              "type": "page",
+              "title": "页面A",
+              "body": "页面A"
+            },
+            "children": [
+              {
+                "label": "本地数据处理",
+                "url": "4",
+                "schema": {
+                  "type": "page",
+                  "title": "页面A-1",
+                  "body": "页面A-1"
+                }
+              },
+              {
+                "label": "本地模型训练",
+                "url": "5",
+                "schema": {
+                  "type": "page",
+                  "title": "页面A-2",
+                  "body": "页面A-2"
+                }
+              },
+              {
+                "label": "模型聚合",
+                "url": "6",
+                "schema": {
+                  "type": "page",
+                  "title": "页面A-3",
+                  "body": "页面A-3"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "模块化边缘服务部署",
+        "children": [
+          {
+            "label": "集群概况",
             "url": "/home",
-            "schemaApi": "get:/pages/user/home/home-page.json"
+            "schemaApi": "get:/pages/public/home/home-page.json",
+            "className": "child1"
+          },
+          {
+            "label": "集群管理",
+            "className": "child1",
+            "children": [
+              {
+                "label": "Node",
+                "url": "/node",
+                "schemaApi": "get:/pages/public/node/node-list.json"
+              },
+              {
+                "label": "Node详情",
+                "url": "/node/:name",
+                "schemaApi": "get:/pages/public/node/node-single-all.json"
+              },
+              {
+                "label": "Namespace",
+                "url": "/namespace",
+                "schemaApi": "get:/pages/public/namespace/namespace-list.json"
+              },
+              {
+                "label": "Namespace详情",
+                "url": "/namespace/:name",
+                "schemaApi": "get:/pages/public/namespace/namespace-single-all.json"
+              },
+              {
+                "label": "Service",
+                "url": "/service",
+                "schemaApi": "get:/pages/public/service/service-list.json"
+              },
+              {
+                "label": "Service详情",
+                "url": "/service/:namespace/:name",
+                "schemaApi": "get:/pages/public/service/service-single-all.json"
+              },
+              {
+                "label": "创建Service",
+                "url": "/services/new",
+                "schemaApi": "get:/pages/public/service/service-new.json",
+                "hidden": true
+              },
+              {
+                "label": "Deployment",
+                "url": "/deployment",
+                "schemaApi": "get:/pages/public/deployment/deployment-list.json"
+              },
+              {
+                "label": "Deployment详情",
+                "url": "/deployment/:namespace/:name",
+                "schemaApi": "get:/pages/public/deployment/deployment-single-all.json"
+              },
+              {
+                "label": "创建Deployment",
+                "url": "/deployments/new",
+                "schemaApi": "get:/pages/public/deployment/deployment-new.json",
+                "hidden": true
+              }
+            ]
+          },
+          {
+            "label": "镜像仓库",
+            "className": "child1",
+            "children": [
+              {
+                "label": "Image",
+                "url": "/image/list",
+                "schemaApi": "get:/pages/public/docker/image-list.json"
+              },
+              {
+                "label": "Image详情",
+                "url": "/image/:image",
+                "schemaApi": "get:/pages/public/docker/image-detail.json"
+              },
+              {
+                "label": "创建镜像",
+                "url": "/images/new",
+                "schemaApi": "get:/pages/public/docker/image-new.json",
+                "hidden": true
+              }
+            ]
           }
         ]
       },
       {
-        "label": "集群管理",
+        "label": "多核智能任务卸载",
         "children": [
-          {
-            "label": "Node",
-            "url": "/node",
-            "schemaApi": "get:/pages/user/node/node-list.json"
-          },
-          {
-            "label": "Node详情",
-            "url": "/node/:name",
-            "schemaApi": "get:/pages/user/node/node-single-all.json"
-          },
-          {
-            "label": "Namespace",
-            "url": "/namespace",
-            "schemaApi": "get:/pages/user/namespace/namespace-list.json"
-          },
-          {
-            "label": "Namespace详情",
-            "url": "/namespace/:name",
-            "schemaApi": "get:/pages/user/namespace/namespace-single-all.json"
-          },
-          {
-            "label": "Service",
-            "url": "/service",
-            "schemaApi": "get:/pages/user/service/service-list.json"
-          },
-          {
-            "label": "Service详情",
-            "url": "/service/:namespace/:name",
-            "schemaApi": "get:/pages/user/service/service-single-all.json"
-          },
-          {
-            "label": "创建Service",
-            "url": "/services/new",
-            "schemaApi": "get:/pages/user/service/service-new.json",
-            "hidden": true
-          },
-          {
-            "label": "Deployment",
-            "url": "/deployment",
-            "schemaApi": "get:/pages/user/deployment/deployment-list.json"
-          },
-          {
-            "label": "Deployment详情",
-            "url": "/deployment/:namespace/:name",
-            "schemaApi": "get:/pages/user/deployment/deployment-single-all.json"
-          },
-          {
-            "label": "创建Deployment",
-            "url": "/deployments/new",
-            "schemaApi": "get:/pages/user/deployment/deployment-new.json",
-            "hidden": true
-          }
+
         ]
       },
       {
-        "label": "镜像仓库",
+        "label": "多云协作",
         "children": [
-          {
-            "label": "Image",
-            "url": "/image/list",
-            "schemaApi": "get:/pages/user/docker/image-list.json"
-          },
-          {
-            "label": "Image详情",
-            "url": "/image/:image",
-            "schemaApi": "get:/pages/user/docker/image-detail.json"
-          },
-          {
-            "label": "创建镜像",
-            "url": "/images/new",
-            "schemaApi": "get:/pages/user/docker/image-new.json",
-            "hidden": true
-          }
+
         ]
       },
       {
-        "label": "个人中心",
+        "label": "账号管理",
         "children": [
           {
-            "label": "账号管理",
+            "label": "个人中心",
+            "className": "child1",
             "url": "/user/info",
-            "schemaApi": "get:/pages/user/user/peer.json"
+            "schemaApi": "get:/pages/public/user/peer.json"
           }
         ]
       }

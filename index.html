@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset=utf-8 />
-    <title>集群管理系统</title>
+    <title>系统</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta
       name="viewport"
@@ -33,6 +33,23 @@
         margin: 0;
         padding: 0;
       }
+      .amis-scope .antd-Layout-brand{
+        overflow: visible;
+      }
+      .amis-scope .antd-Layout--asideFixed .antd-Layout-brandBar{
+        width: 250px;
+      }
+      .amis-scope .antd-Layout--asideFixed .antd-Layout-aside{
+        width: 250px;
+      }
+      .antd-AsideNav-label{
+        font-size: 15px!important;
+        color: rgb(0, 153, 255) !important;
+      }
+      .child1{
+        /* 使用 text-indent 来缩进文本 */
+        text-indent: 1em; /* 这里的值可以根据需要调整，2em 通常相当于当前字体大小的两倍 */
+      }
     </style>
   </head>
   <body>
@@ -52,6 +69,7 @@
         const history = History.createBrowserHistory();
         // const history = History.createHashHistory();
 
+        // var role = 0;//后端不可用时测试用，正式使用应该默认为1
         var role = 1;
 
         $.ajax({
@@ -100,7 +118,7 @@
 
         const admin = {
           type: 'app',
-          brandName: '集群管理系统',
+          brandName: 'ARM国产云-边-端协同平台',
           logo: '/public/logo.png',
           header: {
             type: 'tpl',
@@ -110,6 +128,7 @@
           // footer: '<div class="p-2 text-center bg-light">底部区域</div>',
           // asideBefore: '<div class="p-2 text-center">菜单前面区域</div>',
           // asideAfter: '<div class="p-2 text-center">菜单后面区域</div>',
+          // api: "/example/site.json"
           api: "/pages/admin/site.json"
         };
 
