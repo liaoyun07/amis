@@ -4,7 +4,7 @@
   "body": [
     {
       "type": "button",
-      "label": "创建镜像",
+      "label": "Create Image",
       "icon": "fas fa-plus",
       "size": "md",
       "level": "primary",
@@ -19,7 +19,7 @@
           "type": "reload",
           "align": "left",
           "icon": "iconfont icon-refresh",
-          "label": "刷新",
+          "label": "Refresh",
           "tooltip": "",
           "level": "primary"
         },
@@ -39,32 +39,32 @@
       "columns": [
         {
           "name": "user",
-          "label": "用户",
+          "label": "User",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "image",
-          "label": "名称",
+          "label": "Image",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "status",
-          "label": "状态",
+          "label": "Status",
           "labelClassName": "font-bold",
           "align": "center",
           "classNameExpr": "<%= data.status === '可部署' ? 'text-info' : 'text-danger' %>"
         },
         {
           "name": "createTime",
-          "label": "创建时间",
+          "label": "Created At",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "type": "operation",
-          "label": "操作",
+          "label": "Actions",
           "labelClassName": "font-bold",
           "align": "center",
           "width": "",
@@ -74,11 +74,19 @@
               "buttons": [
                 {
                   "type": "button",
-                  "label": "删除",
+                  "label": "Deploy",
+                  "level": "primary",
+                  "visibleOn": "${status === '可部署'}",
+                  "actionType": "link",
+                  "link": "/deployments/new/${image}"
+                },
+                {
+                  "type": "button",
+                  "label": "Delete",
                   "level": "danger",
                   "visibleOn": "${status === '可部署'}",
                   "actionType": "ajax",
-                  "confirmText": "此操作将会删除镜像${image}，确定进行？",
+                  "confirmText": "This will delete image ${image}. Continue?",
                   "api": {
                     "method": "get",
                     "url": "${API_HOST}/image/delete",
@@ -97,7 +105,7 @@
       ],
       "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "暂无数据",
+      "placeholder": "No data",
       "tableClassName": "table-db table-striped",
       "headerClassName": "crud-table-header",
       "footerClassName": "crud-table-footer",

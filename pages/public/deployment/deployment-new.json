@@ -1,232 +1,109 @@
 {
   "type": "page",
-  "title": "创建Deployment",
+  "title": "Create Deployment",
   "remark": null,
   "toolbar": [
     {
       "type": "button",
       "actionType": "link",
       "link": "/deployment",
-      "label": "返回Deployment列表",
+      "label": "Back To Deployment List",
       "level": "primary"
     }
   ],
-  "preventEnterSubmit": true,
   "body": [
     {
-      "type": "json",
-      "jsonTheme": "eighties",
-      "levelExpand": 1,
-      "value": {
-        "说明": "以下json是一个示例",
-        "metadata": {
-          "name": "tcp-deployment",
-          "namespace": "test",
-          "labels": {
-            "tcp-app": "tcp-python-app"
-          }
-        },
-        "spec": {
-          "replicas": 3,
-          "selector": {
-            "matchLabels": {
-              "tcp-app": "tcp-python-app"
-            }
-          },
-          "template": {
-            "metadata": {
-              "labels": {
-                "tcp-app": "tcp-python-app"
-              }
-            },
-            "spec": {
-              "containers": [
-                {
-                  "name": "tcp-app",
-                  "image": "192.168.3.151:5000/tcp",
-                  "ports": [
-                    {
-                      "containerPort": 9999,
-                      "protocol": "TCP"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      }
+      "type": "alert",
+      "level": "info",
+      "showCloseButton": false,
+      "body": "This form creates a minimal Deployment. If the image is selected from the image list, the image name will be filled automatically."
     },
     {
       "type": "form",
+      "redirect": "/deployment",
       "api": {
         "method": "post",
-        "url": "${API_HOST}/deployment/add"
+        "url": "${API_HOST}/deployment/add",
+        "data": {
+          "metadata": {
+            "name": "${deploymentName}",
+            "namespace": "${namespace}",
+            "labels": {
+              "app": "${deploymentName}"
+            }
+          },
+          "spec": {
+            "replicas": "${replicas}",
+            "selector": {
+              "matchLabels": {
+                "app": "${deploymentName}"
+              }
+            },
+            "template": {
+              "metadata": {
+                "labels": {
+                  "app": "${deploymentName}"
+                }
+              },
+              "spec": {
+                "containers": [
+                  {
+                    "name": "${deploymentName}",
+                    "image": "${image}",
+                    "ports": [
+                      {
+                        "containerPort": "${containerPort}",
+                        "protocol": "TCP"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       },
-      "debug": true,
-      "redirect": "/deployment",
       "actions": [
         {
           "type": "submit",
-          "label": "创建",
+          "label": "Create",
           "level": "primary"
         }
       ],
       "body": [
         {
-          "type": "json-schema",
-          "name": "metadata",
-          "label": "metadata",
-          "labelRemark": {
-            "content": "labels可添加多个",
-            "placement": "top"
-          },
-          "schema": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "namespace",
-              "name",
-              "labels"
-            ],
-            "properties":{
-              "name": {
-                "type": "string",
-                "title": "name"
-              },
-              "namespace": {
-                "type": "string",
-                "title": "namespace"
-              },
-              "labels": {
-                "type": "object",
-                "title": "labels",
-                "additionalProperties": true
-              }
-            }
-          }
+          "type": "input-text",
+          "name": "deploymentName",
+          "label": "Deployment Name",
+          "required": true
         },
         {
-          "type": "json-schema",
-          "name": "spec",
-          "label": "spec",
-          "labelRemark": {
-            "content": "可参照示例进行创建",
-            "placement": "top"
-          },
-          "schema": {
-            "type": "object",
-            "title": "spec",
-            "required": [
-              "replicas",
-              "selector",
-              "template"
-            ],
-            "additionalProperties": false,
-            "properties":{
-              "replicas": {
-                "type": "number",
-                "title": "replicas"
-              },
-              "selector": {
-                "type": "object",
-                "title": "selector",
-                "required": [
-                  "matchLabels"
-                ],
-                "additionalProperties": true,
-                "properties":{
-                  "matchLabels": {
-                    "type": "object",
-                    "title": "matchLabels",
-                    "properties": {
-                    }
-                  }
-                }
-              },
-              "template": {
-                "type": "object",
-                "title": "template",
-                "required": [
-                  "metadata",
-                  "spec"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "metadata": {
-                    "type": "object",
-                    "title": "metadata",
-                    "additionalProperties": false,
-                    "required": [
-                      "labels"
-                    ],
-                    "properties": {
-                      "labels": {
-                        "type": "object",
-                        "title": "labels",
-                        "additionalProperties": true
-                      }
-                    }
-                  },
-                  "spec": {
-                    "type": "object",
-                    "title": "spec",
-                    "required": [
-                      "containers"
-                    ],
-                    "additionalProperties": false,
-                    "properties": {
-                      "containers": {
-                        "type": "array",
-                        "title": "containers",
-                        "additionalProperties": true,
-                        "items": {
-                          "type": "object",
-                          "required": [
-                            "name",
-                            "image",
-                            "ports"
-                          ],
-                          "properties": {
-                            "name": {
-                              "type": "string",
-                              "title": "name"
-                            },
-                            "image": {
-                              "type": "string",
-                              "title": "image"
-                            },
-                            "ports": {
-                              "type": "array",
-                              "title": "ports",
-                              "additionalProperties": true,
-                              "items": {
-                                "type": "object",
-                                "required": [
-                                  "containerPort",
-                                  "protocol"
-                                ],
-                                "properties": {
-                                  "containerPort": {
-                                    "type": "number",
-                                    "title": "containerPort"
-                                  },
-                                  "protocol": {
-                                    "type": "string",
-                                    "title": "protocol"
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+          "type": "input-text",
+          "name": "namespace",
+          "label": "Namespace",
+          "required": true
+        },
+        {
+          "type": "input-text",
+          "name": "image",
+          "label": "Image",
+          "value": "${params.image}",
+          "required": true,
+          "description": "You can enter a short image name like test or a full registry path."
+        },
+        {
+          "type": "input-number",
+          "name": "replicas",
+          "label": "Replicas",
+          "value": 1,
+          "required": true
+        },
+        {
+          "type": "input-number",
+          "name": "containerPort",
+          "label": "Container Port",
+          "value": 8080,
+          "required": true
         }
       ]
     }

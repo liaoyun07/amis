@@ -152,6 +152,12 @@
                 "url": "/deployments/new",
                 "schemaApi": "get:/pages/public/deployment/deployment-new.json",
                 "hidden": true
+              },
+              {
+                "label": "CreateDeploymentByImage",
+                "url": "/deployments/new/:image",
+                "schemaApi": "get:/pages/public/deployment/deployment-new.json",
+                "hidden": true
               }
             ]
           },
