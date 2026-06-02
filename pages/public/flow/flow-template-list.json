@@ -1,0 +1,491 @@
+{
+  "type": "page",
+  "title": "流任务编排中心",
+  "body": [
+    {
+      "type": "crud",
+      "name": "flow-template-list",
+      "syncLocation": false,
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/flow/template/list",
+        "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: payload.data || [] } };"
+      },
+      "headerToolbar": [
+        {
+          "type": "button",
+          "label": "新建通用模板",
+          "level": "primary",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "新建流任务编排模板",
+            "size": "xl",
+            "body": {
+              "type": "form",
+              "mode": "horizontal",
+              "horizontal": { "left": 2, "right": 10 },
+              "api": {
+                "method": "post",
+                "url": "${API_HOST}/datastream/flow/template/save",
+                "data": {
+                  "templateCode": "${templateCode}",
+                  "templateName": "${templateName}",
+                  "description": "${description}",
+                  "taskType": "${taskType}",
+                  "modelType": "${modelType}",
+                  "defaultParams": "${defaultParams}",
+                  "nodes": "${nodes}",
+                  "edges": "${edges}",
+                  "policy": {
+                    "retryTimes": "${policy.retryTimes}",
+                    "timeoutSeconds": "${policy.timeoutSeconds}",
+                    "autoCleanup": "${policy.autoCleanup}",
+                    "runtime": "ARGO"
+                  }
+                },
+                "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
+              },
+              "body": [
+                {
+                  "type": "tabs",
+                  "tabs": [
+                    {
+                      "title": "基础信息",
+                      "body": [
+                        { "type": "input-text", "name": "templateCode", "label": "模板编码", "value": "custom-flow-template", "required": true },
+                        { "type": "input-text", "name": "templateName", "label": "模板名称", "value": "自定义流任务模板", "required": true },
+                        { "type": "input-text", "name": "taskType", "label": "任务类型", "value": "CUSTOM_FLOW", "required": true },
+                        { "type": "hidden", "name": "modelType", "value": "MIXED" },
+                        { "type": "textarea", "name": "description", "label": "说明", "value": "以子任务为核心定义镜像、运行位置、参数绑定和依赖关系；执行顺序由依赖关系决定。" },
+                        {
+                          "type": "input-kv",
+                          "name": "defaultParams",
+                          "label": "实例默认值",
+                          "description": "只放任务实例级参数；子任务参数在子任务内维护。",
+                          "value": {
+                            "taskName": "custom-flow-demo",
+                            "namespace": "flow-demo"
+                          }
+                        },
+                        { "type": "input-number", "name": "policy.retryTimes", "label": "重试次数", "value": 1, "min": 0 },
+                        { "type": "input-number", "name": "policy.timeoutSeconds", "label": "超时秒数", "value": 1800, "min": 1 },
+                        { "type": "switch", "name": "policy.autoCleanup", "label": "完成清理", "value": true }
+                      ]
+                    },
+                    {
+                      "title": "子任务",
+                      "body": [
+                        {
+                          "type": "combo",
+                          "name": "nodes",
+                          "label": "子任务",
+                          "multiple": true,
+                          "multiLine": true,
+                          "draggable": true,
+                          "required": true,
+                          "value": [],
+                          "items": [
+                            { "type": "input-text", "name": "id", "label": "ID", "required": true },
+                            { "type": "input-text", "name": "name", "label": "名称", "required": true },
+                            {
+                              "type": "select",
+                              "name": "type",
+                              "label": "类型",
+                              "value": "JOB",
+                              "required": true,
+                              "options": [
+                                { "label": "Service", "value": "SERVICE" },
+                                { "label": "Job", "value": "JOB" },
+                                { "label": "并行组", "value": "PARALLEL_GROUP" }
+                              ]
+                            },
+                            {
+                              "type": "select",
+                              "name": "target",
+                              "label": "位置",
+                              "value": "EDGE",
+                              "options": [
+                                { "label": "中心云", "value": "CLOUD" },
+                                { "label": "边缘云", "value": "EDGE" },
+                                { "label": "端设备", "value": "TERMINAL" },
+                                { "label": "不限", "value": "ANY" }
+                              ]
+                            },
+                            { "type": "input-text", "name": "image", "label": "镜像", "required": true },
+                            { "type": "input-number", "name": "servicePort", "label": "端口", "value": 8080, "min": 1, "visibleOn": "this.type === 'SERVICE'" },
+                            { "type": "input-number", "name": "replicas", "label": "副本", "min": 1, "visibleOn": "this.type === 'SERVICE' || this.type === 'JOB'" },
+                            { "type": "input-text", "name": "replicasExpression", "label": "并行数", "placeholder": "${clientCount}", "visibleOn": "this.type === 'PARALLEL_GROUP'" },
+                            { "type": "input-number", "name": "priority", "label": "优先级", "value": 0 },
+                            {
+                              "type": "combo",
+                              "name": "paramBindings",
+                              "label": "参数绑定",
+                              "description": "从左到右：参数名、显示名、默认值、值类型、用途、绑定目标、是否必填、说明。例如镜像参数：serverImage / 聚合服务镜像 / fedavg-server / 文本 / 镜像 / image。",
+                              "multiple": true,
+                              "inline": true,
+                              "draggable": true,
+                              "items": [
+                                { "type": "input-text", "name": "key", "placeholder": "参数名", "required": true },
+                                { "type": "input-text", "name": "label", "placeholder": "显示名" },
+                                { "type": "input-text", "name": "defaultValue", "placeholder": "默认值" },
+                                {
+                                  "type": "select",
+                                  "name": "valueType",
+                                  "value": "STRING",
+                                  "options": [
+                                    { "label": "文本", "value": "STRING" },
+                                    { "label": "数字", "value": "NUMBER" },
+                                    { "label": "布尔", "value": "BOOLEAN" }
+                                  ]
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "bindType",
+                                  "value": "ENV",
+                                  "options": [
+                                    { "label": "镜像", "value": "IMAGE" },
+                                    { "label": "环境变量", "value": "ENV" },
+                                    { "label": "并行数量", "value": "REPLICAS" },
+                                    { "label": "运行参数", "value": "RUNTIME" }
+                                  ]
+                                },
+                                { "type": "input-text", "name": "bindTarget", "placeholder": "绑定目标" },
+                                { "type": "switch", "name": "required", "option": "必填" },
+                                { "type": "input-text", "name": "description", "placeholder": "说明" }
+                              ]
+                            },
+                            {
+                              "type": "fieldSet",
+                              "title": "高级配置",
+                              "collapsable": true,
+                              "collapsed": true,
+                              "controls": [
+                                { "type": "input-kv", "name": "env", "label": "环境变量" },
+                                {
+                                  "type": "combo",
+                                  "name": "command",
+                                  "label": "命令",
+                                  "multiple": true,
+                                  "inline": true,
+                                  "items": [
+                                    { "type": "input-text", "name": "-", "placeholder": "sh" }
+                                  ]
+                                },
+                                {
+                                  "type": "combo",
+                                  "name": "args",
+                                  "label": "参数",
+                                  "multiple": true,
+                                  "inline": true,
+                                  "items": [
+                                    { "type": "input-text", "name": "-", "placeholder": "-c" }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "title": "依赖关系",
+                      "body": [
+                        {
+                          "type": "combo",
+                          "name": "edges",
+                          "label": "依赖关系",
+                          "multiple": true,
+                          "inline": true,
+                          "draggable": true,
+                          "value": [],
+                          "items": [
+                            { "type": "select", "name": "from", "placeholder": "前置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
+                            { "type": "select", "name": "to", "placeholder": "后置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
+                            { "type": "input-text", "name": "dataKey", "placeholder": "协同数据" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "reload": "flow-template-list"
+        },
+        { "type": "reload", "label": "刷新", "level": "default" }
+      ],
+      "columns": [
+        { "name": "templateCode", "label": "模板编码", "align": "center" },
+        { "name": "templateName", "label": "模板名称", "align": "center" },
+        { "name": "taskType", "label": "任务类型", "align": "center" },
+        { "name": "nodes", "label": "子任务", "type": "tpl", "tpl": "${nodes.length || 0}", "align": "center" },
+        { "name": "edges", "label": "依赖", "type": "tpl", "tpl": "${edges.length || 0}", "align": "center" },
+        {
+          "type": "operation",
+          "label": "操作",
+          "width": 420,
+          "buttons": [
+            {
+              "type": "button",
+              "label": "编辑",
+              "level": "primary",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "编辑流任务编排模板 - ${templateCode}",
+                "size": "xl",
+                "body": {
+                  "type": "form",
+                  "mode": "horizontal",
+                  "horizontal": { "left": 2, "right": 10 },
+                  "initApi": {
+                    "method": "get",
+                    "url": "${API_HOST}/datastream/flow/template/detail?templateCode=${templateCode}",
+                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
+                  },
+                  "api": {
+                    "method": "post",
+                    "url": "${API_HOST}/datastream/flow/template/save",
+                    "data": {
+                      "templateCode": "${templateCode}",
+                      "templateName": "${templateName}",
+                      "description": "${description}",
+                      "taskType": "${taskType}",
+                      "modelType": "${modelType}",
+                      "defaultParams": "${defaultParams}",
+                      "nodes": "${nodes}",
+                      "edges": "${edges}",
+                      "policy": {
+                        "retryTimes": "${policy.retryTimes}",
+                        "timeoutSeconds": "${policy.timeoutSeconds}",
+                        "autoCleanup": "${policy.autoCleanup}",
+                        "runtime": "ARGO"
+                      }
+                    },
+                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
+                  },
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "基础信息",
+                          "body": [
+                            { "type": "input-text", "name": "templateCode", "label": "模板编码", "required": true, "disabled": true },
+                            { "type": "input-text", "name": "templateName", "label": "模板名称", "required": true },
+                            { "type": "input-text", "name": "taskType", "label": "任务类型", "required": true },
+                            { "type": "hidden", "name": "modelType", "value": "MIXED" },
+                            { "type": "textarea", "name": "description", "label": "说明" },
+                            { "type": "input-kv", "name": "defaultParams", "label": "实例默认值" },
+                            { "type": "input-number", "name": "policy.retryTimes", "label": "重试次数", "min": 0 },
+                            { "type": "input-number", "name": "policy.timeoutSeconds", "label": "超时秒数", "min": 1 },
+                            { "type": "switch", "name": "policy.autoCleanup", "label": "完成清理" }
+                          ]
+                        },
+                        {
+                          "title": "子任务",
+                          "body": [
+                            {
+                              "type": "combo",
+                              "name": "nodes",
+                              "label": "子任务",
+                              "multiple": true,
+                              "multiLine": true,
+                              "draggable": true,
+                              "required": true,
+                              "items": [
+                                { "type": "input-text", "name": "id", "label": "ID", "required": true },
+                                { "type": "input-text", "name": "name", "label": "名称", "required": true },
+                                {
+                                  "type": "select",
+                                  "name": "type",
+                                  "label": "类型",
+                                  "required": true,
+                                  "options": [
+                                    { "label": "Service", "value": "SERVICE" },
+                                    { "label": "Job", "value": "JOB" },
+                                    { "label": "并行组", "value": "PARALLEL_GROUP" }
+                                  ]
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "target",
+                                  "label": "位置",
+                                  "options": [
+                                    { "label": "中心云", "value": "CLOUD" },
+                                    { "label": "边缘云", "value": "EDGE" },
+                                    { "label": "端设备", "value": "TERMINAL" },
+                                    { "label": "不限", "value": "ANY" }
+                                  ]
+                                },
+                                { "type": "input-text", "name": "image", "label": "镜像" },
+                                { "type": "input-number", "name": "servicePort", "label": "端口", "min": 1, "visibleOn": "this.type === 'SERVICE'" },
+                                { "type": "input-number", "name": "replicas", "label": "副本", "min": 1, "visibleOn": "this.type === 'SERVICE' || this.type === 'JOB'" },
+                                { "type": "input-text", "name": "replicasExpression", "label": "并行数", "placeholder": "${clientCount}", "visibleOn": "this.type === 'PARALLEL_GROUP'" },
+                                { "type": "input-number", "name": "priority", "label": "优先级" },
+                                {
+                                  "type": "combo",
+                                  "name": "paramBindings",
+                                  "label": "参数绑定",
+                                  "description": "从左到右：参数名、显示名、默认值、值类型、用途、绑定目标、是否必填、说明。例如环境变量参数：rounds / 训练轮次 / 3 / 数字 / 环境变量 / ROUNDS。",
+                                  "multiple": true,
+                                  "inline": true,
+                                  "draggable": true,
+                                  "items": [
+                                    { "type": "input-text", "name": "key", "placeholder": "参数名", "required": true },
+                                    { "type": "input-text", "name": "label", "placeholder": "显示名" },
+                                    { "type": "input-text", "name": "defaultValue", "placeholder": "默认值" },
+                                    { "type": "select", "name": "valueType", "value": "STRING", "options": [{ "label": "文本", "value": "STRING" }, { "label": "数字", "value": "NUMBER" }, { "label": "布尔", "value": "BOOLEAN" }] },
+                                    { "type": "select", "name": "bindType", "value": "ENV", "options": [{ "label": "镜像", "value": "IMAGE" }, { "label": "环境变量", "value": "ENV" }, { "label": "并行数量", "value": "REPLICAS" }, { "label": "运行参数", "value": "RUNTIME" }] },
+                                    { "type": "input-text", "name": "bindTarget", "placeholder": "绑定目标" },
+                                    { "type": "switch", "name": "required", "option": "必填" },
+                                    { "type": "input-text", "name": "description", "placeholder": "说明" }
+                                  ]
+                                },
+                                {
+                                  "type": "fieldSet",
+                                  "title": "高级配置",
+                                  "collapsable": true,
+                                  "collapsed": true,
+                                  "controls": [
+                                    { "type": "input-kv", "name": "env", "label": "环境变量" },
+                                    {
+                                      "type": "combo",
+                                      "name": "command",
+                                      "label": "命令",
+                                      "multiple": true,
+                                      "inline": true,
+                                      "items": [
+                                        { "type": "input-text", "name": "-", "placeholder": "sh" }
+                                      ]
+                                    },
+                                    {
+                                      "type": "combo",
+                                      "name": "args",
+                                      "label": "参数",
+                                      "multiple": true,
+                                      "inline": true,
+                                      "items": [
+                                        { "type": "input-text", "name": "-", "placeholder": "-c" }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "title": "依赖关系",
+                          "body": [
+                            {
+                              "type": "combo",
+                              "name": "edges",
+                              "label": "依赖关系",
+                              "multiple": true,
+                              "inline": true,
+                              "draggable": true,
+                              "items": [
+                                { "type": "select", "name": "from", "placeholder": "前置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
+                                { "type": "select", "name": "to", "placeholder": "后置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
+                                { "type": "input-text", "name": "dataKey", "placeholder": "协同数据" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "reload": "flow-template-list"
+            },
+            {
+              "type": "button",
+              "label": "预览",
+              "level": "info",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "执行计划预览 - ${templateCode}",
+                "size": "xl",
+                "body": {
+                  "type": "service",
+                  "api": {
+                    "method": "post",
+                    "url": "${API_HOST}/datastream/flow/template/preview",
+                    "data": {
+                      "templateCode": "${templateCode}",
+                      "templateName": "${templateName}",
+                      "description": "${description}",
+                      "taskType": "${taskType}",
+                      "modelType": "${modelType}",
+                      "defaultParams": "${defaultParams}",
+                      "nodes": "${nodes}",
+                      "edges": "${edges}",
+                      "policy": "${policy}"
+                    },
+                    "adaptor": "var data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', ') }); }); }); data.levelRows = levelRows; var split = data.splitRule || {}; var splitParams = split.params || {}; data.splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, nodeType: group.nodeType, executor: group.executor, key: item.key, label: item.label, value: item.value, bindType: item.bindType, bindTarget: item.bindTarget, description: item.description }); }); }); data.paramRows = paramRows; data.workflowJson = JSON.stringify(data.workflow || {}, null, 2); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                  },
+                  "body": [
+                    { "type": "divider", "title": "拆分项" },
+                    {
+                      "type": "table",
+                      "source": "${splitItems}",
+                      "columns": [
+                        { "name": "id", "label": "编号", "width": 80 },
+                        { "name": "name", "label": "子任务" }
+                      ]
+                    },
+                    { "type": "divider", "title": "参数使用关系" },
+                    {
+                      "type": "table",
+                      "source": "${paramRows}",
+                      "columns": [
+                        { "name": "nodeName", "label": "子任务", "width": 150 },
+                        { "name": "key", "label": "参数", "width": 130 },
+                        { "name": "value", "label": "值", "width": 100 },
+                        { "name": "bindType", "label": "用途", "width": 100 },
+                        { "name": "bindTarget", "label": "绑定目标", "width": 130 },
+                        { "name": "description", "label": "说明" }
+                      ]
+                    },
+                    { "type": "divider", "title": "执行层级" },
+                    {
+                      "type": "table",
+                      "source": "${levelRows}",
+                      "columns": [
+                        { "name": "level", "label": "层级", "width": 70 },
+                        { "name": "taskId", "label": "子任务 ID", "width": 140 },
+                        { "name": "taskName", "label": "子任务名称" },
+                        { "name": "taskType", "label": "类型", "width": 130 },
+                        { "name": "executor", "label": "位置", "width": 90 },
+                        { "name": "parallelGroup", "label": "并行", "width": 70 },
+                        { "name": "expandedTasks", "label": "展开" }
+                      ]
+                    },
+                    { "type": "divider", "title": "Argo Workflow" },
+                    { "type": "editor", "name": "workflowJson", "language": "json", "disabled": true, "size": "lg" }
+                  ]
+                }
+              }
+            },
+            { "type": "button", "label": "创建任务", "level": "link", "actionType": "link", "link": "/flow/task/create" },
+            {
+              "type": "button",
+              "label": "删除",
+              "level": "danger",
+              "actionType": "ajax",
+              "confirmText": "确认删除模板 ${templateCode}？",
+              "api": {
+                "method": "get",
+                "url": "${API_HOST}/datastream/flow/template/delete?templateCode=${templateCode}",
+                "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
+              },
+              "reload": "flow-template-list"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

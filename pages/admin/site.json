@@ -8,80 +8,94 @@
         "redirect": "/home"
       },
       {
-        "label": "云边端协同数据流处理",
+        "label": "\u4e91\u8fb9\u7aef\u534f\u540c\u6570\u636e\u6d41\u5904\u7406",
         "children": [
           {
-            "label": "任务训练管理模块",
-            "url": "index",
+            "label": "\u6d41\u4efb\u52a1\u63a7\u5236\u7f16\u6392",
+            "url": "flow",
             "schema": {
               "type": "page",
-              "title": "页面A",
-              "body": "页面A"
+              "title": "Flow",
+              "body": "Flow"
             },
             "children": [
               {
-                "label": "任务创建",
-                "url": "1",
-                "schema": {
-                  "type": "page",
-                  "title": "页面A-1",
-                  "body": "页面A-1"
-                }
+                "label": "\u6d41\u4efb\u52a1\u7f16\u6392\u4e2d\u5fc3",
+                "url": "/flow/template",
+                "schemaApi": "get:/pages/public/flow/flow-template-list.json?v=20260601-flow11"
               },
               {
-                "label": "任务修改",
-                "url": "2",
-                "schema": {
-                  "type": "page",
-                  "title": "页面A-2",
-                  "body": "页面A-2"
-                }
+                "label": "\u521b\u5efa\u6d41\u4efb\u52a1",
+                "url": "/flow/task/create",
+                "schemaApi": "get:/pages/public/flow/flow-task-create.json?v=20260601-flow8"
               },
               {
-                "label": "任务调度",
-                "url": "3",
-                "schema": {
-                  "type": "page",
-                  "title": "页面A-3",
-                  "body": "页面A-3"
-                }
+                "label": "\u6d41\u63a7\u5236\u4e2d\u5fc3",
+                "url": "/flow/control",
+                "schemaApi": "get:/pages/public/flow/flow-control-center.json?v=20260601-flow4"
               }
             ]
           },
           {
-            "label": "计算执行模块",
-            "url": "com",
+            "label": "\u4efb\u52a1\u8bad\u7ec3\u7ba1\u7406\u6a21\u5757",
+            "url": "index",
             "schema": {
               "type": "page",
-              "title": "页面A",
-              "body": "页面A"
+              "title": "Task Training",
+              "body": "Task Training"
             },
             "children": [
               {
-                "label": "本地数据处理",
+                "label": "\u4efb\u52a1\u521b\u5efa",
+                "url": "/task/create",
+                "schemaApi": "get:/pages/public/fedavg/fedavg-task-create.json"
+              },
+              {
+                "label": "\u4efb\u52a1\u8c03\u5ea6",
+                "url": "/task/schedule",
+                "schemaApi": "get:/pages/public/fedavg/fedavg-task-schedule.json"
+              },
+              {
+                "label": "\u4efb\u52a1\u5904\u7406\u7ed3\u679c",
+                "url": "/task/result",
+                "schemaApi": "get:/pages/public/fedavg/fedavg-task-result.json"
+              }
+            ]
+          },
+          {
+            "label": "\u8ba1\u7b97\u6267\u884c\u6a21\u5757",
+            "url": "com",
+            "schema": {
+              "type": "page",
+              "title": "Compute",
+              "body": "Compute"
+            },
+            "children": [
+              {
+                "label": "\u672c\u5730\u6570\u636e\u5904\u7406",
                 "url": "4",
                 "schema": {
                   "type": "page",
-                  "title": "页面A-1",
-                  "body": "页面A-1"
+                  "title": "Local Data Processing",
+                  "body": "Local Data Processing"
                 }
               },
               {
-                "label": "本地模型训练",
+                "label": "\u672c\u5730\u6a21\u578b\u8bad\u7ec3",
                 "url": "5",
                 "schema": {
                   "type": "page",
-                  "title": "页面A-2",
-                  "body": "页面A-2"
+                  "title": "Local Model Training",
+                  "body": "Local Model Training"
                 }
               },
               {
-                "label": "模型聚合",
+                "label": "\u6a21\u578b\u805a\u5408",
                 "url": "6",
                 "schema": {
                   "type": "page",
-                  "title": "页面A-3",
-                  "body": "页面A-3"
+                  "title": "Model Aggregation",
+                  "body": "Model Aggregation"
                 }
               }
             ]
@@ -89,16 +103,16 @@
         ]
       },
       {
-        "label": "模块化边缘服务部署",
+        "label": "\u6a21\u5757\u5316\u8fb9\u7f18\u670d\u52a1\u90e8\u7f72",
         "children": [
           {
-            "label": "集群概况",
+            "label": "\u96c6\u7fa4\u6982\u51b5",
             "url": "/home",
             "schemaApi": "get:/pages/public/home/home-page.json",
             "className": "child1"
           },
           {
-            "label": "集群管理",
+            "label": "\u96c6\u7fa4\u7ba1\u7406",
             "className": "child1",
             "children": [
               {
@@ -107,7 +121,7 @@
                 "schemaApi": "get:/pages/public/node/node-list.json"
               },
               {
-                "label": "Node详情",
+                "label": "Node\u8be6\u60c5",
                 "url": "/node/:name",
                 "schemaApi": "get:/pages/public/node/node-single-all.json"
               },
@@ -117,7 +131,7 @@
                 "schemaApi": "get:/pages/public/namespace/namespace-list.json"
               },
               {
-                "label": "Namespace详情",
+                "label": "Namespace\u8be6\u60c5",
                 "url": "/namespace/:name",
                 "schemaApi": "get:/pages/public/namespace/namespace-single-all.json"
               },
@@ -127,12 +141,12 @@
                 "schemaApi": "get:/pages/public/service/service-list.json"
               },
               {
-                "label": "Service详情",
+                "label": "Service\u8be6\u60c5",
                 "url": "/service/:namespace/:name",
                 "schemaApi": "get:/pages/public/service/service-single-all.json"
               },
               {
-                "label": "创建Service",
+                "label": "\u521b\u5efaService",
                 "url": "/services/new",
                 "schemaApi": "get:/pages/public/service/service-new.json",
                 "hidden": true
@@ -143,12 +157,12 @@
                 "schemaApi": "get:/pages/public/deployment/deployment-list.json"
               },
               {
-                "label": "Deployment详情",
+                "label": "Deployment\u8be6\u60c5",
                 "url": "/deployment/:namespace/:name",
                 "schemaApi": "get:/pages/public/deployment/deployment-single-all.json"
               },
               {
-                "label": "创建Deployment",
+                "label": "\u521b\u5efaDeployment",
                 "url": "/deployments/new",
                 "schemaApi": "get:/pages/public/deployment/deployment-new.json",
                 "hidden": true
@@ -162,7 +176,7 @@
             ]
           },
           {
-            "label": "镜像仓库",
+            "label": "\u955c\u50cf\u4ed3\u5e93",
             "className": "child1",
             "children": [
               {
@@ -171,12 +185,12 @@
                 "schemaApi": "get:/pages/public/docker/image-list.json"
               },
               {
-                "label": "Image详情",
+                "label": "Image\u8be6\u60c5",
                 "url": "/image/:image",
                 "schemaApi": "get:/pages/public/docker/image-detail.json"
               },
               {
-                "label": "创建镜像",
+                "label": "\u521b\u5efa\u955c\u50cf",
                 "url": "/images/new",
                 "schemaApi": "get:/pages/public/docker/image-new.json",
                 "hidden": true
@@ -186,28 +200,24 @@
         ]
       },
       {
-        "label": "多核智能任务卸载",
-        "children": [
-
-        ]
+        "label": "\u591a\u6838\u667a\u80fd\u4efb\u52a1\u5378\u8f7d",
+        "children": []
       },
       {
-        "label": "多云协作",
-        "children": [
-
-        ]
+        "label": "\u591a\u4e91\u534f\u4f5c",
+        "children": []
       },
       {
-        "label": "账号管理",
+        "label": "\u8d26\u53f7\u7ba1\u7406",
         "children": [
           {
-            "label": "用户管理",
+            "label": "\u7528\u6237\u7ba1\u7406",
             "className": "child1",
             "url": "/user/manage",
             "schemaApi": "get:/pages/public/user/manage.json"
           },
           {
-            "label": "个人中心",
+            "label": "\u4e2a\u4eba\u4e2d\u5fc3",
             "className": "child1",
             "url": "/user/info",
             "schemaApi": "get:/pages/public/user/peer.json"

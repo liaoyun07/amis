@@ -22,23 +22,59 @@
       "columns": [
         {
           "name": "name",
-          "label": "name",
+          "label": "Node",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "cpu",
-          "label": "cpu占用率",
+          "label": "CPU使用率",
           "type": "progress",
-          "map": ["bg-info", "bg-success","bg-warning","bg-danger"],
+          "map": ["bg-info", "bg-success", "bg-warning", "bg-danger"],
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "cpuUsedText",
+          "label": "CPU已用",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "cpuAllocatableText",
+          "label": "CPU可分配",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "cpuCapacityText",
+          "label": "CPU总量",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "memory",
-          "label": "内存占用率",
+          "label": "内存使用率",
           "type": "progress",
-          "map": ["bg-info", "bg-success","bg-warning","bg-danger"],
+          "map": ["bg-info", "bg-success", "bg-warning", "bg-danger"],
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "memoryUsedText",
+          "label": "内存已用",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "memoryAllocatableText",
+          "label": "内存可分配",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "memoryCapacityText",
+          "label": "内存总量",
           "labelClassName": "font-bold",
           "align": "center"
         }

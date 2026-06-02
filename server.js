@@ -11,8 +11,16 @@ app.set('port', port);
 app.use(logger('dev'));
 app.use(bodyParser.json()); // Parses json, multi-part (file), url-encoded
 
-app.use('/public', express.static('public'));
-app.use('/pages', express.static('pages'));
+const noStoreStatic = {
+    etag: false,
+    maxAge: 0,
+    setHeaders: function (res) {
+        res.setHeader('Cache-Control', 'no-store');
+    }
+};
+
+app.use('/public', express.static('public', noStoreStatic));
+app.use('/pages', express.static('pages', noStoreStatic));
 
 
 app.get('/login', function (req, res) {

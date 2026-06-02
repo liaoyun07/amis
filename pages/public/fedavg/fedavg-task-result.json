@@ -1,0 +1,176 @@
+{
+  "type": "page",
+  "title": "任务处理结果",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "showCloseButton": false,
+      "body": "这里展示任务的总体训练结果，包括总 Loss、总 Accuracy 和最终结果数据。"
+    },
+    {
+      "type": "crud",
+      "name": "fedavg-task-result-list",
+      "title": "任务结果列表",
+          "syncLocation": false,
+          "api": {
+            "method": "get",
+            "url": "${API_HOST}/datastream/fedavg/list",
+            "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: payload.data || [] } };"
+          },
+          "headerToolbar": [
+            {
+              "type": "reload",
+              "label": "刷新",
+              "level": "primary"
+            }
+          ],
+          "columns": [
+            {
+              "name": "algorithm",
+              "label": "算法",
+              "align": "center"
+            },
+            {
+              "name": "taskName",
+              "label": "任务名称",
+              "align": "center"
+            },
+            {
+              "name": "status",
+              "label": "状态",
+              "align": "center",
+              "type": "mapping",
+              "map": {
+                "RUNNING": "<span class='label label-success'>RUNNING</span>",
+                "COMPLETED": "<span class='label label-default'>COMPLETED</span>",
+                "FAILED": "<span class='label label-danger'>FAILED</span>",
+                "DEPLOYING": "<span class='label label-warning'>DEPLOYING</span>",
+                "DEPLOYED": "<span class='label label-info'>DEPLOYED</span>",
+                "UNKNOWN": "<span class='label label-danger'>UNKNOWN</span>",
+                "*": "${status}"
+              }
+            },
+            {
+              "name": "dataset",
+              "label": "数据集",
+              "align": "center"
+            },
+            {
+              "name": "model",
+              "label": "模型",
+              "align": "center"
+            },
+            {
+              "type": "operation",
+              "label": "操作",
+              "align": "center",
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "查看结果",
+                  "level": "success",
+                  "actionType": "dialog",
+                  "dialog": {
+                    "title": "任务结果 - ${taskName}",
+                    "size": "lg",
+                    "body": {
+                      "type": "service",
+                      "api": {
+                        "method": "get",
+                        "url": "${API_HOST}/datastream/fedavg/result?taskName=${taskName}",
+                        "adaptor": "const data = payload.data || {};\nconst history = data.history || [];\nconst clientNames = Array.isArray(data.clients) && data.clients.length ? data.clients : Object.keys(data.clientInfo || {});\nconst roundLabels = history.map(item => `Round ${item.round}`);\nconst roundMetricMap = history.map(item => {\n  const map = {};\n  const clients = item.clients || [];\n  const metrics = item.metrics || [];\n  clients.forEach((client, index) => { map[client] = metrics[index] || {}; });\n  return map;\n});\nconst avg = values => {\n  const nums = values.map(Number).filter(item => !Number.isNaN(item));\n  if (!nums.length) return null;\n  return Number((nums.reduce((sum, item) => sum + item, 0) / nums.length).toFixed(6));\n};\nconst avgMetricValues = key => roundMetricMap.map(map => avg(clientNames.map(client => map[client] && map[client][key])));\ndata.metricRows = history.map((item, index) => ({ round: item.round, avgLoss: avgMetricValues('loss')[index], avgAccuracy: avgMetricValues('accuracy')[index], samples: item.samples, clients: item.clients }));\ndata.lossChart = { tooltip: { trigger: 'axis' }, legend: { top: 0 }, grid: { left: 56, right: 28, bottom: 40, top: 64 }, xAxis: { type: 'category', boundaryGap: false, data: roundLabels }, yAxis: { type: 'value', name: 'Loss', scale: true }, series: [{ name: 'Average Loss', type: 'line', smooth: true, symbolSize: 7, lineStyle: { width: 4 }, data: avgMetricValues('loss') }] };\ndata.accuracyChart = { tooltip: { trigger: 'axis' }, legend: { top: 0 }, grid: { left: 56, right: 28, bottom: 40, top: 64 }, xAxis: { type: 'category', boundaryGap: false, data: roundLabels }, yAxis: { type: 'value', name: 'Accuracy', min: 0, max: 1 }, series: [{ name: 'Average Accuracy', type: 'line', smooth: true, symbolSize: 7, lineStyle: { width: 4 }, data: avgMetricValues('accuracy') }] };\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data };"
+                      },
+                      "body": [
+                        {
+                          "type": "grid",
+                          "columns": [
+                            {
+                              "md": 3,
+                              "body": {
+                                "type": "tpl",
+                                "tpl": "<div class='b-a p-3'><div class='text-muted'>状态</div><h3>${status|default:-}</h3></div>"
+                              }
+                            },
+                            {
+                              "md": 3,
+                              "body": {
+                                "type": "tpl",
+                                "tpl": "<div class='b-a p-3'><div class='text-muted'>轮次</div><h3>${currentRound|default:0} / ${rounds|default:0}</h3></div>"
+                              }
+                            },
+                            {
+                              "md": 3,
+                              "body": {
+                                "type": "tpl",
+                                "tpl": "<div class='b-a p-3'><div class='text-muted'>数据集 / 模型</div><h3>${dataset|default:-} / ${model|default:-}</h3></div>"
+                              }
+                            },
+                            {
+                              "md": 3,
+                              "body": {
+                                "type": "tpl",
+                                "tpl": "<div class='b-a p-3'><div class='text-muted'>资源是否已释放</div><h3>${resourcesReleased ? '是' : '否'}</h3></div>"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "divider",
+                          "title": "总 Loss 曲线"
+                        },
+                        {
+                          "type": "chart",
+                          "height": 320,
+                          "source": "${lossChart}",
+                          "placeholder": "暂无 Loss 曲线数据"
+                        },
+                        {
+                          "type": "divider",
+                          "title": "总 Accuracy 曲线"
+                        },
+                        {
+                          "type": "chart",
+                          "height": 320,
+                          "source": "${accuracyChart}",
+                          "placeholder": "暂无 Accuracy 曲线数据"
+                        },
+                        {
+                          "type": "table",
+                          "source": "${metricRows}",
+                          "placeholder": "暂无轮次指标数据",
+                          "columns": [
+                            { "name": "round", "label": "轮次" },
+                            { "name": "avgLoss", "label": "平均 Loss" },
+                            { "name": "avgAccuracy", "label": "平均 Accuracy" },
+                            { "name": "samples", "label": "样本数" },
+                            { "name": "clients", "label": "参与客户端", "type": "json" }
+                          ]
+                        },
+                        {
+                          "type": "divider",
+                          "title": "最终全局权重预览"
+                        },
+                        {
+                          "type": "json",
+                          "name": "globalWeightsPreview",
+                          "placeholder": "暂无全局权重"
+                        },
+                        {
+                          "type": "divider",
+                          "title": "原始结果"
+                        },
+                        {
+                          "type": "json",
+                          "name": "$$"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+    }
+  ]
+}

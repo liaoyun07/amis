@@ -1,0 +1,178 @@
+{
+  "type": "page",
+  "title": "创建流任务",
+  "body": [
+    {
+      "type": "form",
+      "name": "flow-task-create-form",
+      "title": "基于编排模板创建任务实例",
+      "mode": "horizontal",
+      "horizontal": { "left": 2, "right": 10 },
+      "initApi": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/flow/template/detail?templateCode=fedavg-flow",
+        "adaptor": "var data = payload.data || {}; var defaults = data.defaultParams || {}; var paramRows = []; (data.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(item){ paramRows.push({ nodeId: node.id, nodeName: node.name, nodeType: node.type, target: node.target, key: item.key, label: item.label || item.key, value: defaults[item.key] !== undefined ? defaults[item.key] : item.defaultValue, bindType: item.bindType, bindTarget: item.bindTarget, description: item.description }); }); }); var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, modelType: data.modelType, taskName: defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run'), namespace: defaults.namespace || 'flow-demo', params: defaults, paramRows: paramRows, splitItems: splitItems } };"
+      },
+      "api": {
+        "method": "post",
+        "url": "${API_HOST}/datastream/flow/task/start",
+        "data": {
+          "templateCode": "${templateCode}",
+          "taskName": "${taskName}",
+          "namespace": "${namespace}",
+          "params": "${params}"
+        },
+        "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
+        "messages": {
+          "success": "流任务已提交，可到流控制中心查看运行状态。"
+        }
+      },
+      "actions": [
+        {
+          "type": "button",
+          "label": "预览执行计划",
+          "level": "info",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "本次任务执行计划",
+            "size": "xl",
+            "body": {
+              "type": "service",
+              "api": {
+                "method": "post",
+                "url": "${API_HOST}/datastream/flow/task/preview",
+                "data": {
+                  "templateCode": "${templateCode}",
+                  "taskName": "${taskName}",
+                  "namespace": "${namespace}",
+                  "params": "${params}"
+                },
+                "adaptor": "var data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', ') }); }); }); data.levelRows = levelRows; var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, key: item.key, value: item.value, bindType: item.bindType, bindTarget: item.bindTarget, description: item.description }); }); }); data.paramRows = paramRows; data.workflowJson = JSON.stringify(data.workflow || {}, null, 2); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+              },
+              "body": [
+                {
+                  "type": "property",
+                  "items": [
+                    { "label": "任务名称", "content": "${taskName}" },
+                    { "label": "命名空间", "content": "${namespace}" },
+                    { "label": "模板", "content": "${templateName}" },
+                    { "label": "任务类型", "content": "${taskType}" }
+                  ]
+                },
+                { "type": "divider", "title": "本次参数" },
+                {
+                  "type": "table",
+                  "source": "${paramRows}",
+                  "columns": [
+                    { "name": "nodeName", "label": "子任务", "width": 150 },
+                    { "name": "key", "label": "参数", "width": 130 },
+                    { "name": "value", "label": "值", "width": 100 },
+                    { "name": "bindType", "label": "用途", "width": 100 },
+                    { "name": "bindTarget", "label": "绑定目标", "width": 130 },
+                    { "name": "description", "label": "说明" }
+                  ]
+                },
+                { "type": "divider", "title": "执行层级" },
+                {
+                  "type": "table",
+                  "source": "${levelRows}",
+                  "columns": [
+                    { "name": "level", "label": "层级", "width": 70 },
+                    { "name": "taskId", "label": "子任务 ID", "width": 140 },
+                    { "name": "taskName", "label": "子任务名称" },
+                    { "name": "taskType", "label": "类型", "width": 130 },
+                    { "name": "executor", "label": "位置", "width": 90 },
+                    { "name": "parallelGroup", "label": "并行", "width": 70 },
+                    { "name": "expandedTasks", "label": "展开" }
+                  ]
+                },
+                { "type": "divider", "title": "Argo Workflow" },
+                { "type": "editor", "name": "workflowJson", "language": "json", "disabled": true, "size": "lg" }
+              ]
+            }
+          }
+        },
+        { "type": "submit", "label": "启动任务", "level": "primary" },
+        { "type": "reset", "label": "重置" }
+      ],
+      "body": [
+        {
+          "type": "tabs",
+          "tabs": [
+            {
+              "title": "运行参数",
+              "body": [
+                {
+                  "type": "select",
+                  "name": "templateCode",
+                  "label": "编排模板",
+                  "value": "fedavg-flow",
+                  "required": true,
+                  "source": {
+                    "method": "get",
+                    "url": "${API_HOST}/datastream/flow/template/list",
+                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var paramRows = []; (item.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(binding){ paramRows.push({ nodeId: node.id, nodeName: node.name, nodeType: node.type, target: node.target, key: binding.key, label: binding.label || binding.key, value: defaults[binding.key] !== undefined ? defaults[binding.key] : binding.defaultValue, bindType: binding.bindType, bindTarget: binding.bindTarget, description: binding.description }); }); }); var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, modelType: item.modelType, taskName: defaults.taskName || (item.templateCode + '-run'), namespace: defaults.namespace || 'flow-demo', params: defaults, paramRows: paramRows, splitItems: splitItems }; }) } };"
+                  },
+                  "autoFill": {
+                    "templateName": "${templateName}",
+                    "taskType": "${taskType}",
+                    "modelType": "${modelType}",
+                    "taskName": "${taskName}",
+                    "namespace": "${namespace}",
+                    "params": "${params}",
+                    "paramRows": "${paramRows}",
+                    "splitItems": "${splitItems}"
+                  }
+                },
+                {
+                  "type": "property",
+                  "title": "当前模板",
+                  "items": [
+                    { "label": "名称", "content": "${templateName}" },
+                    { "label": "类型", "content": "${taskType}" }
+                  ]
+                },
+                { "type": "input-text", "name": "taskName", "label": "任务名称", "value": "fedavg-flow-demo", "required": true },
+                { "type": "input-text", "name": "namespace", "label": "命名空间", "value": "fedavg-demo", "required": true },
+                {
+                  "type": "input-kv",
+                  "name": "params",
+                  "label": "本次参数",
+                  "description": "模板默认参数会自动带出；多次运行只改这里。",
+                  "value": {}
+                }
+              ]
+            },
+            {
+              "title": "模板结构",
+              "body": [
+                {
+                  "type": "table",
+                  "title": "拆分项",
+                  "source": "${splitItems}",
+                  "columns": [
+                    { "name": "id", "label": "编号", "width": 80 },
+                    { "name": "name", "label": "子任务" }
+                  ]
+                },
+                {
+                  "type": "table",
+                  "title": "参数使用关系",
+                  "source": "${paramRows}",
+                  "columns": [
+                    { "name": "nodeName", "label": "子任务", "width": 150 },
+                    { "name": "key", "label": "参数", "width": 130 },
+                    { "name": "value", "label": "默认值", "width": 100 },
+                    { "name": "bindType", "label": "用途", "width": 100 },
+                    { "name": "bindTarget", "label": "绑定目标", "width": 130 },
+                    { "name": "description", "label": "说明" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

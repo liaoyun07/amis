@@ -1,0 +1,336 @@
+{
+  "type": "page",
+  "title": "任务创建",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "showCloseButton": false,
+      "body": "请先选择算法，再填写对应的任务参数。当前已接入 FedAvg，后续可以在这里扩展其它算法。"
+    },
+    {
+      "type": "form",
+      "title": "创建训练任务",
+      "name": "fedavg-task-create-form",
+      "mode": "horizontal",
+      "horizontal": {
+        "left": 3,
+        "right": 9
+      },
+      "api": {
+        "method": "post",
+        "url": "${API_HOST}/datastream/fedavg/start",
+        "data": {
+          "algorithm": "${algorithm}",
+          "taskName": "${taskName}",
+          "namespace": "${namespace}",
+          "serverImage": "${serverImage}",
+          "clientImage": "${clientImage}",
+          "dataset": "${dataset}",
+          "model": "${model}",
+          "clientCount": "${clientCount}",
+          "cloudCluster": "cloud-main",
+          "cloudNamespace": "${namespace}",
+          "aggregatorExternalUrl": "${aggregatorExternalUrl}",
+          "edgeClusters": "${edgeClusters}",
+          "rounds": "${rounds}",
+          "partition": {
+            "strategy": "${partitionStrategy}",
+            "alpha": "${partitionAlpha}",
+            "seed": "${partitionSeed}"
+          },
+          "train": {
+            "localEpochs": "${localEpochs}",
+            "batchSize": "${batchSize}",
+            "learningRate": "${learningRate}",
+            "maxSamplesPerClient": "${maxSamplesPerClient}",
+            "participationRate": "${participationRate}",
+            "selectionSeed": "${selectionSeed}"
+          }
+        },
+        "requestAdaptor": "const rows = Array.isArray(api.data.edgeClusters) ? api.data.edgeClusters : [];\nconst edgeClusters = rows\n  .filter(item => item && item.clusterCode && Number(item.clientCount) > 0)\n  .map(item => ({\n    clusterCode: item.clusterCode,\n    namespace: item.namespace || api.data.namespace,\n    clientCount: Number(item.clientCount)\n  }));\nconst total = edgeClusters.reduce((sum, item) => sum + item.clientCount, 0);\napi.data.edgeClusters = edgeClusters;\nif (total > 0) {\n  api.data.clientCount = total;\n}\nreturn api;",
+        "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
+        "messages": {
+          "success": "任务已创建，可前往“任务调度”查看部署与运行状态。"
+        }
+      },
+      "actions": [
+        {
+          "type": "submit",
+          "label": "创建任务",
+          "level": "primary",
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "reset",
+          "label": "重置",
+          "visibleOn": "this.algorithm === 'fedavg'"
+        }
+      ],
+      "body": [
+        {
+          "type": "select",
+          "name": "algorithm",
+          "label": "算法",
+          "value": "",
+          "required": true,
+          "clearable": false,
+          "placeholder": "请选择算法",
+          "options": [
+            {
+              "label": "FedAvg",
+              "value": "fedavg"
+            }
+          ]
+        },
+        {
+          "type": "alert",
+          "level": "warning",
+          "showCloseButton": false,
+          "body": "请选择算法后再继续填写参数。",
+          "visibleOn": "!this.algorithm"
+        },
+        {
+          "type": "input-text",
+          "name": "taskName",
+          "label": "任务名称",
+          "value": "fedavg-demo",
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-text",
+          "name": "namespace",
+          "label": "命名空间",
+          "value": "fedavg-demo",
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-text",
+          "name": "serverImage",
+          "label": "服务端镜像",
+          "value": "fedavg-server",
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-text",
+          "name": "clientImage",
+          "label": "客户端镜像",
+          "value": "fedavg-client",
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "select",
+          "name": "dataset",
+          "label": "数据集",
+          "value": "mnist",
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'",
+          "options": [
+            {
+              "label": "MNIST",
+              "value": "mnist"
+            },
+            {
+              "label": "CIFAR-10",
+              "value": "cifar10"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "model",
+          "label": "模型",
+          "value": "mlp",
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'",
+          "options": [
+            {
+              "label": "MLP",
+              "value": "mlp"
+            },
+            {
+              "label": "SmallVGG",
+              "value": "small-vgg"
+            }
+          ]
+        },
+        {
+          "type": "input-number",
+          "name": "clientCount",
+          "label": "客户端数量",
+          "value": 2,
+          "min": 1,
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "divider",
+          "title": "边缘云分布",
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-table",
+          "name": "edgeClusters",
+          "label": "客户端分布",
+          "addable": true,
+          "removable": true,
+          "strictMode": false,
+          "value": [
+            {
+              "clusterCode": "edge-a",
+              "namespace": "fedavg-demo",
+              "clientCount": 1
+            },
+            {
+              "clusterCode": "edge-b",
+              "namespace": "fedavg-demo",
+              "clientCount": 1
+            }
+          ],
+          "columns": [
+            {
+              "name": "clusterCode",
+              "label": "边缘云",
+              "type": "select",
+              "required": true,
+              "options": [
+                {
+                  "label": "edge-a",
+                  "value": "edge-a"
+                },
+                {
+                  "label": "edge-b",
+                  "value": "edge-b"
+                }
+              ]
+            },
+            {
+              "name": "namespace",
+              "label": "命名空间",
+              "type": "input-text",
+              "placeholder": "默认使用任务命名空间"
+            },
+            {
+              "name": "clientCount",
+              "label": "客户端数",
+              "type": "input-number",
+              "min": 1,
+              "required": true
+            }
+          ],
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-text",
+          "name": "aggregatorExternalUrl",
+          "label": "云端访问地址",
+          "value": "",
+          "placeholder": "默认 http://host.k3d.internal:18090",
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "rounds",
+          "label": "训练轮数",
+          "value": 3,
+          "min": 1,
+          "required": true,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "select",
+          "name": "partitionStrategy",
+          "label": "分片方式",
+          "value": "dirichlet",
+          "visibleOn": "this.algorithm === 'fedavg'",
+          "options": [
+            {
+              "label": "Dirichlet",
+              "label": "Dirichlet 非 IID",
+              "value": "dirichlet"
+            },
+            {
+              "label": "IID",
+              "value": "iid"
+            }
+          ]
+        },
+        {
+          "type": "input-number",
+          "name": "partitionAlpha",
+          "label": "Dirichlet Alpha",
+          "value": 0.5,
+          "min": 0.01,
+          "step": 0.1,
+          "precision": 2,
+          "visibleOn": "this.algorithm === 'fedavg' && this.partitionStrategy === 'dirichlet'"
+        },
+        {
+          "type": "input-number",
+          "name": "partitionSeed",
+          "label": "分片随机种子",
+          "value": 42,
+          "min": 0,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "localEpochs",
+          "label": "本地 Epoch",
+          "value": 1,
+          "min": 1,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "batchSize",
+          "label": "批大小",
+          "value": 32,
+          "min": 1,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "learningRate",
+          "label": "学习率",
+          "value": 0.01,
+          "min": 0.0001,
+          "step": 0.001,
+          "precision": 4,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "maxSamplesPerClient",
+          "label": "每客户端最大样本数",
+          "value": 600,
+          "min": 1,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "participationRate",
+          "label": "每轮参与比例",
+          "value": 0.1,
+          "min": 0.01,
+          "max": 1,
+          "step": 0.01,
+          "precision": 2,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        },
+        {
+          "type": "input-number",
+          "name": "selectionSeed",
+          "label": "客户端抽样种子",
+          "value": 42,
+          "min": 0,
+          "visibleOn": "this.algorithm === 'fedavg'"
+        }
+      ]
+    }
+  ]
+}
