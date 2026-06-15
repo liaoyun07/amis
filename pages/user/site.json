@@ -33,6 +33,11 @@
                 "label": "\u6d41\u63a7\u5236\u4e2d\u5fc3",
                 "url": "/flow/control",
                 "schemaApi": "get:/pages/public/flow/flow-control-center.json?v=20260601-flow4"
+              },
+              {
+                "label": "\u5bf9\u8c61\u5b58\u50a8\u6570\u636e",
+                "url": "/flow/minio",
+                "schemaApi": "get:/pages/public/flow/minio-browser.json?v=20260603-minio1"
               }
             ]
           },
@@ -112,65 +117,71 @@
             "className": "child1"
           },
           {
+            "label": "\u5e94\u7528\u5206\u53d1\u8bb0\u5f55",
+            "url": "/distribution/records",
+            "schemaApi": "get:/pages/public/distribution/application-distribution-records.json?v=20260607-dist1",
+            "className": "child1"
+          },
+          {
             "label": "\u96c6\u7fa4\u7ba1\u7406",
             "className": "child1",
             "children": [
               {
                 "label": "Node",
                 "url": "/node",
-                "schemaApi": "get:/pages/public/node/node-list.json"
+                "schemaApi": "get:/pages/public/node/node-list.json?v=20260607-node2"
               },
               {
                 "label": "Node\u8be6\u60c5",
-                "url": "/node/:name",
-                "schemaApi": "get:/pages/public/node/node-single-all.json"
+                "url": "/node/:clusterCode/:name",
+                "schemaApi": "get:/pages/public/node/node-single-all.json?v=20260607-node2"
               },
               {
                 "label": "Namespace",
                 "url": "/namespace",
-                "schemaApi": "get:/pages/public/namespace/namespace-list.json"
+                "schemaApi": "get:/pages/public/namespace/namespace-list.json?v=20260607-multi1"
               },
               {
                 "label": "Namespace\u8be6\u60c5",
-                "url": "/namespace/:name",
-                "schemaApi": "get:/pages/public/namespace/namespace-single-all.json"
+                "url": "/namespace/:clusterCode/:name",
+                "schemaApi": "get:/pages/public/namespace/namespace-single-all.json?v=20260607-multi1"
               },
               {
                 "label": "Service",
                 "url": "/service",
-                "schemaApi": "get:/pages/public/service/service-list.json"
+                "schemaApi": "get:/pages/public/service/service-list.json?v=20260607-multi1"
               },
               {
                 "label": "Service\u8be6\u60c5",
-                "url": "/service/:namespace/:name",
-                "schemaApi": "get:/pages/public/service/service-single-all.json"
+                "url": "/service/:clusterCode/:namespace/:name",
+                "schemaApi": "get:/pages/public/service/service-single-all.json?v=20260607-multi1"
               },
               {
                 "label": "\u521b\u5efaService",
                 "url": "/services/new",
-                "schemaApi": "get:/pages/public/service/service-new.json",
+                "schemaApi": "get:/pages/public/service/service-new.json?v=20260607-multi1",
                 "hidden": true
               },
               {
                 "label": "Deployment",
                 "url": "/deployment",
-                "schemaApi": "get:/pages/public/deployment/deployment-list.json"
+                "schemaApi": "get:/pages/public/deployment/deployment-list.json?v=20260607-multi1"
               },
               {
                 "label": "Deployment\u8be6\u60c5",
-                "url": "/deployment/:namespace/:name",
-                "schemaApi": "get:/pages/public/deployment/deployment-single-all.json"
+                "url": "/deployment/:clusterCode/:namespace/:name",
+                "schemaApi": "get:/pages/public/deployment/deployment-single-all.json?v=20260607-multi1"
               },
               {
                 "label": "\u521b\u5efaDeployment",
                 "url": "/deployments/new",
-                "schemaApi": "get:/pages/public/deployment/deployment-new.json",
+                "schemaApi": "get:/pages/public/deployment/deployment-new.json?v=20260607-multi1",
                 "hidden": true
               },
               {
                 "label": "CreateDeploymentByImage",
                 "url": "/deployments/new/:image",
-                "schemaApi": "get:/pages/public/deployment/deployment-new.json",
+                "schemaApi": "get:/pages/public/deployment/deployment-new.json?v=20260607-multi1",
                 "hidden": true
               }
             ]

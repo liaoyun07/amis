@@ -7,20 +7,24 @@
       "name": "flow-task-create-form",
       "title": "基于编排模板创建任务实例",
       "mode": "horizontal",
-      "horizontal": { "left": 2, "right": 10 },
+      "horizontal": {
+        "left": 2,
+        "right": 10
+      },
       "initApi": {
         "method": "get",
         "url": "${API_HOST}/datastream/flow/template/detail?templateCode=fedavg-flow",
-        "adaptor": "var data = payload.data || {}; var defaults = data.defaultParams || {}; var paramRows = []; (data.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(item){ paramRows.push({ nodeId: node.id, nodeName: node.name, nodeType: node.type, target: node.target, key: item.key, label: item.label || item.key, value: defaults[item.key] !== undefined ? defaults[item.key] : item.defaultValue, bindType: item.bindType, bindTarget: item.bindTarget, description: item.description }); }); }); var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, modelType: data.modelType, taskName: defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run'), namespace: defaults.namespace || 'flow-demo', params: defaults, paramRows: paramRows, splitItems: splitItems } };"
+        "adaptor": "function rowsOf(data){ var defaults = data.defaultParams || {}; var map = {}; function put(key, label, value, valueType, required, usedBy, description){ if(!key) return; if(!map[key]) map[key] = { key: key, label: label || key, value: value, valueType: valueType || 'STRING', required: !!required, usedBy: [], description: description || '' }; map[key].usedBy.push(usedBy || 'template'); } (data.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(p){ if(!p.key) return; put(p.key, p.label || p.key, defaults[p.key] !== undefined ? defaults[p.key] : p.defaultValue, p.valueType || 'STRING', !!p.required, node.name || node.id, p.description || ''); }); }); (data.loops || []).forEach(function(loop){ if(loop.countParam) put(loop.countParam, loop.countParam, defaults[loop.countParam], 'NUMBER', true, loop.id || 'loop', 'loop count'); }); return Object.keys(map).map(function(k){ var row = map[k]; if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2); row.usedBy = row.usedBy.join(', '); return row; }); } var data = payload.data || {}; var defaults = data.defaultParams || {}; var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, modelType: data.modelType, taskName: (defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(data), splitItems: splitItems } };"
       },
       "api": {
         "method": "post",
         "url": "${API_HOST}/datastream/flow/task/start",
+        "requestAdaptor": "function parse(v,t){ if(v === undefined || v === null || v === '') return v; if(t === 'NUMBER') return Number(v); if(t === 'BOOLEAN') return v === true || v === 'true'; if(t === 'JSON') return typeof v === 'string' ? JSON.parse(v) : v; return v; } var params = {}; (api.data.paramRows || []).forEach(function(row){ if(row.key) params[row.key] = parse(row.value, row.valueType); }); api.data.params = params; delete api.data.paramRows; return api;",
         "data": {
           "templateCode": "${templateCode}",
           "taskName": "${taskName}",
           "namespace": "${namespace}",
-          "params": "${params}"
+          "paramRows": "${paramRows}"
         },
         "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
         "messages": {
@@ -41,59 +45,125 @@
               "api": {
                 "method": "post",
                 "url": "${API_HOST}/datastream/flow/task/preview",
+                "requestAdaptor": "function parse(v,t){ if(v === undefined || v === null || v === '') return v; if(t === 'NUMBER') return Number(v); if(t === 'BOOLEAN') return v === true || v === 'true'; if(t === 'JSON') return typeof v === 'string' ? JSON.parse(v) : v; return v; } var params = {}; (api.data.paramRows || []).forEach(function(row){ if(row.key) params[row.key] = parse(row.value, row.valueType); }); api.data.params = params; delete api.data.paramRows; return api;",
                 "data": {
                   "templateCode": "${templateCode}",
                   "taskName": "${taskName}",
                   "namespace": "${namespace}",
-                  "params": "${params}"
+                  "paramRows": "${paramRows}"
                 },
-                "adaptor": "var data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', ') }); }); }); data.levelRows = levelRows; var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, key: item.key, value: item.value, bindType: item.bindType, bindTarget: item.bindTarget, description: item.description }); }); }); data.paramRows = paramRows; data.workflowJson = JSON.stringify(data.workflow || {}, null, 2); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                "adaptor": "var data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = levelRows; var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, key: item.key, value: item.value, injectAs: item.bindTarget || item.key, description: item.description }); }); }); data.paramRows = paramRows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
               },
               "body": [
                 {
                   "type": "property",
                   "items": [
-                    { "label": "任务名称", "content": "${taskName}" },
-                    { "label": "命名空间", "content": "${namespace}" },
-                    { "label": "模板", "content": "${templateName}" },
-                    { "label": "任务类型", "content": "${taskType}" }
+                    {
+                      "label": "任务名称",
+                      "content": "${taskName}"
+                    },
+                    {
+                      "label": "命名空间",
+                      "content": "${namespace}"
+                    },
+                    {
+                      "label": "模板",
+                      "content": "${templateName}"
+                    }
                   ]
                 },
-                { "type": "divider", "title": "本次参数" },
                 {
                   "type": "table",
+                  "title": "参数会注入到哪些子任务",
                   "source": "${paramRows}",
                   "columns": [
-                    { "name": "nodeName", "label": "子任务", "width": 150 },
-                    { "name": "key", "label": "参数", "width": 130 },
-                    { "name": "value", "label": "值", "width": 100 },
-                    { "name": "bindType", "label": "用途", "width": 100 },
-                    { "name": "bindTarget", "label": "绑定目标", "width": 130 },
-                    { "name": "description", "label": "说明" }
+                    {
+                      "name": "nodeName",
+                      "label": "子任务",
+                      "width": 160
+                    },
+                    {
+                      "name": "key",
+                      "label": "参数",
+                      "width": 140
+                    },
+                    {
+                      "name": "value",
+                      "label": "本次值",
+                      "width": 140
+                    },
+                    {
+                      "name": "injectAs",
+                      "label": "注入为",
+                      "width": 130
+                    },
+                    {
+                      "name": "description",
+                      "label": "说明"
+                    }
                   ]
                 },
-                { "type": "divider", "title": "执行层级" },
                 {
                   "type": "table",
+                  "title": "执行层级",
                   "source": "${levelRows}",
                   "columns": [
-                    { "name": "level", "label": "层级", "width": 70 },
-                    { "name": "taskId", "label": "子任务 ID", "width": 140 },
-                    { "name": "taskName", "label": "子任务名称" },
-                    { "name": "taskType", "label": "类型", "width": 130 },
-                    { "name": "executor", "label": "位置", "width": 90 },
-                    { "name": "parallelGroup", "label": "并行", "width": 70 },
-                    { "name": "expandedTasks", "label": "展开" }
+                    {
+                      "name": "level",
+                      "label": "层级",
+                      "width": 70
+                    },
+                    {
+                      "name": "taskId",
+                      "label": "子任务 ID",
+                      "width": 150
+                    },
+                    {
+                      "name": "taskName",
+                      "label": "子任务名称"
+                    },
+                    {
+                      "name": "taskType",
+                      "label": "类型",
+                      "width": 130
+                    },
+                    {
+                      "name": "executor",
+                      "label": "位置",
+                      "width": 90
+                    },
+                    {
+                      "name": "parallelGroup",
+                      "label": "并行",
+                      "width": 70
+                    },
+                    {
+                      "name": "inputPath",
+                      "label": "输入路径"
+                    },
+                    {
+                      "name": "outputPath",
+                      "label": "输出路径"
+                    },
+                    {
+                      "name": "expandedTasks",
+                      "label": "展开"
+                    }
                   ]
-                },
-                { "type": "divider", "title": "Argo Workflow" },
-                { "type": "editor", "name": "workflowJson", "language": "json", "disabled": true, "size": "lg" }
+                }
               ]
             }
           }
         },
-        { "type": "submit", "label": "启动任务", "level": "primary" },
-        { "type": "reset", "label": "重置" }
+        {
+          "type": "submit",
+          "label": "启动任务",
+          "level": "primary"
+        },
+        {
+          "type": "reset",
+          "label": "重置"
+        }
       ],
       "body": [
         {
@@ -111,7 +181,7 @@
                   "source": {
                     "method": "get",
                     "url": "${API_HOST}/datastream/flow/template/list",
-                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var paramRows = []; (item.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(binding){ paramRows.push({ nodeId: node.id, nodeName: node.name, nodeType: node.type, target: node.target, key: binding.key, label: binding.label || binding.key, value: defaults[binding.key] !== undefined ? defaults[binding.key] : binding.defaultValue, bindType: binding.bindType, bindTarget: binding.bindTarget, description: binding.description }); }); }); var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, modelType: item.modelType, taskName: defaults.taskName || (item.templateCode + '-run'), namespace: defaults.namespace || 'flow-demo', params: defaults, paramRows: paramRows, splitItems: splitItems }; }) } };"
+                    "adaptor": "function rowsOf(data){ var defaults = data.defaultParams || {}; var map = {}; function put(key, label, value, valueType, required, usedBy, description){ if(!key) return; if(!map[key]) map[key] = { key: key, label: label || key, value: value, valueType: valueType || 'STRING', required: !!required, usedBy: [], description: description || '' }; map[key].usedBy.push(usedBy || 'template'); } (data.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(p){ if(!p.key) return; put(p.key, p.label || p.key, defaults[p.key] !== undefined ? defaults[p.key] : p.defaultValue, p.valueType || 'STRING', !!p.required, node.name || node.id, p.description || ''); }); }); (data.loops || []).forEach(function(loop){ if(loop.countParam) put(loop.countParam, loop.countParam, defaults[loop.countParam], 'NUMBER', true, loop.id || 'loop', 'loop count'); }); return Object.keys(map).map(function(k){ var row = map[k]; if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2); row.usedBy = row.usedBy.join(', '); return row; }); } return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, modelType: item.modelType, taskName: (defaults.taskName || (item.templateCode + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(item), splitItems: splitItems }; }) } };"
                   },
                   "autoFill": {
                     "templateName": "${templateName}",
@@ -119,7 +189,6 @@
                     "modelType": "${modelType}",
                     "taskName": "${taskName}",
                     "namespace": "${namespace}",
-                    "params": "${params}",
                     "paramRows": "${paramRows}",
                     "splitItems": "${splitItems}"
                   }
@@ -128,18 +197,107 @@
                   "type": "property",
                   "title": "当前模板",
                   "items": [
-                    { "label": "名称", "content": "${templateName}" },
-                    { "label": "类型", "content": "${taskType}" }
+                    {
+                      "label": "名称",
+                      "content": "${templateName}"
+                    },
+                    {
+                      "label": "类型",
+                      "content": "${taskType}"
+                    }
                   ]
                 },
-                { "type": "input-text", "name": "taskName", "label": "任务名称", "value": "fedavg-flow-demo", "required": true },
-                { "type": "input-text", "name": "namespace", "label": "命名空间", "value": "fedavg-demo", "required": true },
                 {
-                  "type": "input-kv",
-                  "name": "params",
-                  "label": "本次参数",
-                  "description": "模板默认参数会自动带出；多次运行只改这里。",
-                  "value": {}
+                  "type": "input-text",
+                  "name": "taskName",
+                  "label": "任务名称",
+                  "required": true
+                },
+                {
+                  "type": "input-text",
+                  "name": "namespace",
+                  "label": "命名空间",
+                  "required": true
+                },
+                {
+                  "type": "input-table",
+                  "name": "paramRows",
+                  "label": "本次运行参数",
+                  "addable": false,
+                  "removable": false,
+                  "columns": [
+                    {
+                      "name": "label",
+                      "label": "参数",
+                      "type": "input-text",
+                      "disabled": true
+                    },
+                    {
+                      "name": "value",
+                      "label": "值",
+                      "type": "select",
+                      "visibleOn": "this.key === 'DATASET'",
+                      "options": [
+                        {
+                          "label": "MNIST",
+                          "value": "mnist"
+                        },
+                        {
+                          "label": "CIFAR10",
+                          "value": "cifar10"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "value",
+                      "label": "值",
+                      "type": "select",
+                      "visibleOn": "this.key === 'MODEL'",
+                      "options": [
+                        {
+                          "label": "MLP",
+                          "value": "mlp"
+                        },
+                        {
+                          "label": "CNN",
+                          "value": "cnn"
+                        },
+                        {
+                          "label": "Small VGG",
+                          "value": "small-vgg"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "value",
+                      "label": "值",
+                      "type": "textarea",
+                      "visibleOn": "this.key !== 'DATASET' && this.key !== 'MODEL'",
+                      "minRows": 1,
+                      "maxRows": 6
+                    },
+                    {
+                      "name": "valueType",
+                      "label": "类型",
+                      "type": "input-text",
+                      "disabled": true,
+                      "width": 80
+                    },
+                    {
+                      "name": "usedBy",
+                      "label": "使用位置",
+                      "type": "textarea",
+                      "disabled": true,
+                      "minRows": 1,
+                      "maxRows": 3
+                    },
+                    {
+                      "name": "description",
+                      "label": "说明",
+                      "type": "input-text",
+                      "disabled": true
+                    }
+                  ]
                 }
               ]
             },
@@ -151,21 +309,41 @@
                   "title": "拆分项",
                   "source": "${splitItems}",
                   "columns": [
-                    { "name": "id", "label": "编号", "width": 80 },
-                    { "name": "name", "label": "子任务" }
+                    {
+                      "name": "id",
+                      "label": "编号",
+                      "width": 80
+                    },
+                    {
+                      "name": "name",
+                      "label": "子任务"
+                    }
                   ]
                 },
                 {
                   "type": "table",
-                  "title": "参数使用关系",
+                  "title": "参数来源",
                   "source": "${paramRows}",
                   "columns": [
-                    { "name": "nodeName", "label": "子任务", "width": 150 },
-                    { "name": "key", "label": "参数", "width": 130 },
-                    { "name": "value", "label": "默认值", "width": 100 },
-                    { "name": "bindType", "label": "用途", "width": 100 },
-                    { "name": "bindTarget", "label": "绑定目标", "width": 130 },
-                    { "name": "description", "label": "说明" }
+                    {
+                      "name": "label",
+                      "label": "参数",
+                      "width": 150
+                    },
+                    {
+                      "name": "value",
+                      "label": "默认值",
+                      "width": 160
+                    },
+                    {
+                      "name": "valueType",
+                      "label": "类型",
+                      "width": 90
+                    },
+                    {
+                      "name": "usedBy",
+                      "label": "使用位置"
+                    }
                   ]
                 }
               ]

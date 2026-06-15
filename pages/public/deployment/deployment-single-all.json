@@ -1,22 +1,22 @@
 {
   "type": "page",
-  "title": "${params.namespace}/${params.name}",
-  "remark": null,
+  "title": "${params.clusterCode}/${params.namespace}/${params.name}",
   "initApi": {
     "url": "${API_HOST}/deployment/search/single",
     "data": {
+      "clusterCode": "${params.clusterCode}",
       "deploymentName": "${params.name}",
       "namespaceName": "${params.namespace}"
     },
     "method": "get",
-    "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
+    "adaptor": "return {\n  ...payload,\n  status: payload.status === 200 ? 0 : payload.status,\n  msg: payload.message,\n  data: {response: payload.data}\n}"
   },
   "toolbar": [
     {
       "type": "button",
       "actionType": "link",
       "link": "/deployment",
-      "label": "返回Deployment列表",
+      "label": "\u8fd4\u56de Deployment \u5217\u8868",
       "level": "primary",
       "size": "lg"
     }

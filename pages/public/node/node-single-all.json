@@ -1,10 +1,11 @@
 {
   "type": "page",
-  "title": "${params.name}",
+  "title": "${params.clusterCode}/${params.name}",
   "remark": null,
   "initApi": {
     "url": "${API_HOST}/node/search/single/all",
     "data": {
+      "clusterCode": "${params.clusterCode}",
       "nodeName": "${params.name}"
     },
     "method": "get",
@@ -15,7 +16,7 @@
       "type": "button",
       "actionType": "link",
       "link": "/node",
-      "label": "返回Node列表",
+      "label": "\u8fd4\u56de Node \u5217\u8868",
       "level": "primary",
       "size": "lg"
     }

@@ -1,0 +1,92 @@
+{
+  "type": "page",
+  "title": "对象存储数据",
+  "body": [
+    {
+      "type": "crud",
+      "name": "minio-object-list",
+      "syncLocation": false,
+      "filter": {
+        "title": "查询条件",
+        "mode": "inline",
+        "body": [
+          { "type": "input-text", "name": "bucket", "label": "Bucket", "value": "flow-data" },
+          { "type": "input-text", "name": "prefix", "label": "Prefix", "placeholder": "fedavg-flow-demo-retry/" },
+          { "type": "submit", "label": "查询", "level": "primary" }
+        ]
+      },
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/minio/list?bucket=${bucket|default:flow-data}&prefix=${prefix}",
+        "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: payload.data || [] } };"
+      },
+      "headerToolbar": [
+        { "type": "reload", "label": "刷新", "level": "primary" }
+      ],
+      "columns": [
+        { "name": "bucket", "label": "Bucket", "width": 120 },
+        { "name": "key", "label": "对象 Key" },
+        { "name": "size", "label": "大小", "width": 100 },
+        { "name": "lastModified", "label": "更新时间", "width": 180 },
+        {
+          "type": "operation",
+          "label": "操作",
+          "width": 140,
+          "buttons": [
+            {
+              "type": "button",
+              "label": "查看",
+              "level": "link",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "${key}",
+                "size": "xl",
+                "body": {
+                  "type": "service",
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/datastream/minio/object?bucket=${bucket}&key=${key}",
+                    "adaptor": "var data = payload.data || {}; data.prettyJson = data.json ? JSON.stringify(data.json, null, 2) : ''; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                  },
+                  "body": [
+                    {
+                      "type": "property",
+                      "items": [
+                        { "label": "Bucket", "content": "${bucket}" },
+                        { "label": "Key", "content": "${key}" },
+                        { "label": "大小", "content": "${size}" }
+                      ]
+                    },
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "JSON",
+                          "visibleOn": "this.prettyJson",
+                          "body": {
+                            "type": "editor",
+                            "name": "prettyJson",
+                            "language": "json",
+                            "disabled": true,
+                            "size": "xl"
+                          }
+                        },
+                        {
+                          "title": "原始内容",
+                          "body": {
+                            "type": "tpl",
+                            "tpl": "<pre style='white-space: pre-wrap; max-height: 560px; overflow: auto;'>${content}</pre>"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

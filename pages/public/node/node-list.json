@@ -10,8 +10,7 @@
           "type": "reload",
           "align": "left",
           "icon": "iconfont icon-refresh",
-          "label": "刷新",
-          "tooltip": "",
+          "label": "\u5237\u65b0",
           "level": "primary"
         },
         {
@@ -29,51 +28,77 @@
       },
       "columns": [
         {
+          "name": "clusterCode",
+          "label": "\u96c6\u7fa4",
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
+          "name": "clusterRole",
+          "label": "\u89d2\u8272",
+          "type": "mapping",
+          "map": {
+            "CLOUD": "\u4e2d\u5fc3\u4e91",
+            "EDGE": "\u8fb9\u7f18\u4e91",
+            "GENERAL": "\u901a\u7528\u96c6\u7fa4",
+            "*": "${clusterRole}"
+          },
+          "labelClassName": "font-bold",
+          "align": "center"
+        },
+        {
           "name": "name",
-          "label": "名称",
+          "label": "\u540d\u79f0",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "creationTime",
-          "label": "创建时间",
+          "label": "\u521b\u5efa\u65f6\u95f4",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "internalIp",
-          "label": "集群内ip",
+          "label": "\u8282\u70b9 IP",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "podCidr",
-          "label": "pod地址",
+          "label": "Pod CIDR",
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "name": "status",
-          "label": "状态",
+          "label": "\u72b6\u6001",
+          "type": "mapping",
+          "map": {
+            "READY": "<span class='label label-success'>READY</span>",
+            "NOT_READY": "<span class='label label-warning'>NOT_READY</span>",
+            "UNAVAILABLE": "<span class='label label-danger'>UNAVAILABLE</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          },
           "labelClassName": "font-bold",
           "align": "center"
         },
         {
           "type": "operation",
-          "label": "操作",
+          "label": "\u64cd\u4f5c",
           "labelClassName": "font-bold",
           "align": "center",
-          "width": "",
           "buttons": [
             {
               "type": "button-group",
               "buttons": [
                 {
                   "type": "button",
-                  "label": "查看详情",
+                  "label": "\u67e5\u770b\u8be6\u60c5",
                   "level": "primary",
                   "actionType": "link",
-                  "link": "/node/${name}"
+                  "link": "/node/${clusterCode}/${name}",
+                  "visibleOn": "this.status !== 'UNAVAILABLE'"
                 }
               ]
             }
@@ -84,7 +109,7 @@
       ],
       "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "暂无数据",
+      "placeholder": "\u6682\u65e0\u6570\u636e",
       "tableClassName": "table-db table-striped",
       "headerClassName": "crud-table-header",
       "footerClassName": "crud-table-footer",

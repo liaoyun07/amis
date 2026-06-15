@@ -1,89 +1,47 @@
 {
   "type": "page",
-  "title": "创建Service",
-  "remark": null,
+  "title": "\u521b\u5efa Service",
   "toolbar": [
     {
       "type": "button",
       "actionType": "link",
       "link": "/service",
-      "label": "返回Service列表",
+      "label": "\u8fd4\u56de Service \u5217\u8868",
       "level": "primary"
     }
   ],
   "preventEnterSubmit": true,
   "body": [
     {
-      "type": "json",
-      "jsonTheme": "eighties",
-      "levelExpand": 1,
-      "value": {
-        "说明": "以下json是一个示例",
-        "metadata": {
-          "name": "tcp-service",
-          "namespace": "test",
-          "labels": {
-            "tcp-app": "tcp-python-app"
-          }
-        },
-        "spec": {
-          "type": "NodePort",
-          "selector": {
-            "tcp-app": "tcp-python-app"
-          },
-          "ports": [
-            {
-              "name": "tcp",
-              "nodePort": 30888,
-              "port": 80,
-              "protocol": "TCP",
-              "targetPort": 9999
-            }
-          ]
-        }
-      }
-    },
-    {
       "type": "form",
       "api": {
         "method": "post",
         "url": "${API_HOST}/service/add"
       },
-      "debug": true,
       "redirect": "/service",
       "actions": [
-        {
-          "type": "submit",
-          "label": "创建",
-          "level": "primary"
-        }
+        { "type": "submit", "label": "\u521b\u5efa", "level": "primary" }
       ],
       "body": [
+        {
+          "type": "select",
+          "name": "clusterCode",
+          "label": "\u76ee\u6807\u96c6\u7fa4",
+          "source": "${API_HOST}/cluster/options",
+          "value": "cloud-main",
+          "required": true
+        },
         {
           "type": "json-schema",
           "name": "metadata",
           "label": "metadata",
-          "labelRemark": {
-            "content": "labels可添加多个",
-            "placement": "top"
-          },
           "schema": {
             "type": "object",
             "additionalProperties": false,
-            "required": [
-              "namespace",
-              "name",
-              "labels"
-            ],
-            "properties":{
-              "name": {
-                "type": "string",
-                "title": "name"
-              },
-              "namespace": {
-                "type": "string",
-                "title": "namespace"
-              },
+            "required": ["namespace", "name", "labels"],
+            "properties": {
+              "name": { "type": "string", "title": "name" },
+              "namespace": { "type": "string", "title": "namespace" },
               "labels": {
                 "type": "object",
                 "title": "labels",
@@ -96,60 +54,39 @@
           "type": "json-schema",
           "name": "spec",
           "label": "spec",
-          "labelRemark": {
-            "content": "参照示例需要根据type在ports的二级展开中添加一项配置。<pre></pre>例如type为\"NodePort\",则添加\"nodePort\"为键。<pre></pre>若不添加则会随机分配，可在Service详情中查看。",
-            "placement": "top"
-          },
           "schema": {
             "type": "object",
             "title": "spec",
-            "required": [
-              "selector",
-              "type",
-              "ports"
-            ],
+            "required": ["selector", "type", "ports"],
             "additionalProperties": false,
-            "properties":{
+            "properties": {
               "type": {
                 "type": "string",
-                "title": "type"
+                "title": "type",
+                "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
               },
               "selector": {
                 "type": "object",
                 "title": "selector",
-                "additionalProperties": true,
-                "properties":{
-                }
+                "additionalProperties": true
               },
               "ports": {
                 "type": "array",
                 "title": "ports",
-                "additionalProperties": true,
                 "items": {
                   "type": "object",
-                  "required": [
-                    "name",
-                    "port",
-                    "protocol",
-                    "targetPort"
-                  ],
+                  "required": ["name", "port", "protocol", "targetPort"],
+                  "additionalProperties": true,
                   "properties": {
-                    "name": {
-                      "type": "string",
-                      "title": "name"
-                    },
-                    "port": {
-                      "type": "number",
-                      "title": "port"
-                    },
+                    "name": { "type": "string", "title": "name" },
+                    "port": { "type": "number", "title": "port" },
                     "protocol": {
                       "type": "string",
-                      "title": "protocol"
+                      "title": "protocol",
+                      "enum": ["TCP", "UDP"]
                     },
-                    "targetPort": {
-                      "type": "number",
-                      "title": "targetPort"
-                    }
+                    "targetPort": { "type": "number", "title": "targetPort" },
+                    "nodePort": { "type": "number", "title": "nodePort" }
                   }
                 }
               }

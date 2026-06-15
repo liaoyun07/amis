@@ -4,29 +4,36 @@
   "body": [
     {
       "type": "button",
-      "label": "创建Namespace",
+      "label": "\u521b\u5efa Namespace",
       "icon": "fas fa-plus",
       "size": "md",
       "level": "primary",
       "actionType": "dialog",
       "dialog": {
         "type": "dialog",
-        "title": "创建Namespace",
-        "closeOnEsc": true,
+        "title": "\u521b\u5efa Namespace",
         "body": [
           {
             "type": "form",
-            "title": "表单",
             "api": {
               "method": "get",
               "url": "${API_HOST}/namespace/add",
               "data": {
+                "clusterCode": "${clusterCode}",
                 "name": "${name}"
               }
             },
             "body": [
               {
-                "label": "名称",
+                "label": "\u76ee\u6807\u96c6\u7fa4",
+                "type": "select",
+                "name": "clusterCode",
+                "source": "${API_HOST}/cluster/options",
+                "value": "cloud-main",
+                "required": true
+              },
+              {
+                "label": "\u540d\u79f0",
                 "type": "input-text",
                 "name": "name",
                 "required": true
@@ -37,11 +44,8 @@
         "actions": [
           {
             "type": "submit",
-            "label": "创建",
+            "label": "\u521b\u5efa",
             "actionType": "submit",
-            "required": [
-              "name"
-            ],
             "level": "info"
           }
         ]
@@ -55,17 +59,14 @@
           "type": "reload",
           "align": "left",
           "icon": "iconfont icon-refresh",
-          "label": "刷新",
-          "tooltip": "",
+          "label": "\u5237\u65b0",
           "level": "primary"
         },
         {
           "type": "columns-toggler",
           "align": "right",
-          "draggable": false,
           "icon": "fas fa-cog",
-          "overlay": true,
-          "footerBtnSize": "sm"
+          "overlay": true
         }
       ],
       "api": {
@@ -73,57 +74,49 @@
         "method": "get"
       },
       "columns": [
+        { "name": "clusterCode", "label": "\u96c6\u7fa4", "align": "center" },
         {
-          "name": "user",
-          "label": "用户",
-          "labelClassName": "font-bold",
+          "name": "clusterRole",
+          "label": "\u89d2\u8272",
+          "type": "mapping",
+          "map": {
+            "CLOUD": "\u4e2d\u5fc3\u4e91",
+            "EDGE": "\u8fb9\u7f18\u4e91",
+            "GENERAL": "\u901a\u7528\u96c6\u7fa4",
+            "*": "${clusterRole}"
+          },
           "align": "center"
         },
-        {
-          "name": "name",
-          "label": "名称",
-          "labelClassName": "font-bold",
-          "align": "center"
-        },
-        {
-          "name": "creationTime",
-          "label": "创建时间",
-          "labelClassName": "font-bold",
-          "align": "center"
-        },
-        {
-          "name": "status",
-          "label": "状态",
-          "labelClassName": "font-bold",
-          "align": "center"
-        },
+        { "name": "user", "label": "\u7528\u6237", "align": "center" },
+        { "name": "name", "label": "\u540d\u79f0", "align": "center" },
+        { "name": "creationTime", "label": "\u521b\u5efa\u65f6\u95f4", "align": "center" },
+        { "name": "status", "label": "\u72b6\u6001", "align": "center" },
         {
           "type": "operation",
-          "label": "操作",
-          "labelClassName": "font-bold",
+          "label": "\u64cd\u4f5c",
           "align": "center",
-          "width": "",
           "buttons": [
             {
               "type": "button-group",
               "buttons": [
                 {
                   "type": "button",
-                  "label": "查看详情",
+                  "label": "\u67e5\u770b\u8be6\u60c5",
                   "level": "primary",
                   "actionType": "link",
-                  "link": "/namespace/$name"
+                  "link": "/namespace/${clusterCode}/${name}"
                 },
                 {
                   "type": "button",
-                  "label": "删除",
+                  "label": "\u5220\u9664",
                   "level": "danger",
                   "actionType": "ajax",
-                  "confirmText": "此操作将会删除$name下所有资源，确定进行？",
+                  "confirmText": "\u786e\u5b9a\u5220\u9664 ${clusterCode}/${name} \u5417\uff1f",
                   "api": {
                     "method": "get",
                     "url": "${API_HOST}/namespace/delete",
                     "data": {
+                      "clusterCode": "${clusterCode}",
                       "name": "${name}"
                     }
                   },
@@ -132,19 +125,13 @@
               ]
             }
           ],
-          "placeholder": "-",
           "fixed": "right"
         }
       ],
       "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "暂无数据",
-      "tableClassName": "table-db table-striped",
-      "headerClassName": "crud-table-header",
-      "footerClassName": "crud-table-footer",
-      "toolbarClassName": "crud-table-toolbar",
-      "combineNum": 1,
-      "bodyClassName": "panel-default"
+      "placeholder": "\u6682\u65e0\u6570\u636e",
+      "tableClassName": "table-db table-striped"
     }
   ]
 }

@@ -4,7 +4,7 @@
   "body": [
     {
       "type": "crud",
-      "name": "flow-template-list",
+      "name": "flow-template-crud",
       "syncLocation": false,
       "api": {
         "method": "get",
@@ -14,37 +14,114 @@
       "headerToolbar": [
         {
           "type": "button",
-          "label": "新建通用模板",
+          "label": "新建通用编排模板",
           "level": "primary",
           "actionType": "dialog",
           "dialog": {
-            "title": "新建流任务编排模板",
-            "size": "xl",
+            "title": "新建通用流任务编排模板",
+            "size": "full",
             "body": {
               "type": "form",
-              "mode": "horizontal",
-              "horizontal": { "left": 2, "right": 10 },
+              "mode": "normal",
+              "data": {
+                "modelType": "MIXED",
+                "timeoutSeconds": 1800,
+                "autoCleanup": true,
+                "nodes": [],
+                "edges": [],
+                "loopRows": [],
+                "dependencyRows": []
+              },
               "api": {
                 "method": "post",
                 "url": "${API_HOST}/datastream/flow/template/save",
-                "data": {
-                  "templateCode": "${templateCode}",
-                  "templateName": "${templateName}",
-                  "description": "${description}",
-                  "taskType": "${taskType}",
-                  "modelType": "${modelType}",
-                  "defaultParams": "${defaultParams}",
-                  "nodes": "${nodes}",
-                  "edges": "${edges}",
-                  "policy": {
-                    "retryTimes": "${policy.retryTimes}",
-                    "timeoutSeconds": "${policy.timeoutSeconds}",
-                    "autoCleanup": "${policy.autoCleanup}",
-                    "runtime": "ARGO"
+                "requestAdaptor": "function parseValue(value, type){ if(value === undefined || value === null || value === '') return value; if(type === 'NUMBER') return Number(value); if(type === 'BOOLEAN') return value === true || value === 'true'; if(type === 'JSON') return typeof value === 'string' ? JSON.parse(value) : value; return value; } function compact(obj){ Object.keys(obj).forEach(function(key){ if(obj[key] === undefined || obj[key] === null || obj[key] === '') delete obj[key]; }); return obj; } function splitIds(value){ return String(value || '').split(',').map(function(item){ return item.trim(); }).filter(Boolean); } function deriveLoopNodes(startValue, endValue, edges, nodes){ var starts = splitIds(startValue); var end = String(endValue || '').trim(); if(!starts.length || !end) return []; var ids = (nodes || []).map(function(n){ return n.id; }).filter(Boolean); var next = {}; var prev = {}; ids.forEach(function(id){ next[id] = []; prev[id] = []; }); (edges || []).forEach(function(e){ if(next[e.from]) next[e.from].push(e.to); if(prev[e.to]) prev[e.to].push(e.from); }); var reach = {}; function walkForward(id){ if(reach[id]) return; reach[id] = true; (next[id] || []).forEach(walkForward); } starts.forEach(walkForward); var canEnd = {}; function walkBack(id){ if(canEnd[id]) return; canEnd[id] = true; (prev[id] || []).forEach(walkBack); } walkBack(end); var selected = {}; ids.forEach(function(id){ if(reach[id] && canEnd[id]) selected[id] = true; }); var indegree = {}; ids.forEach(function(id){ if(selected[id]) indegree[id] = 0; }); (edges || []).forEach(function(e){ if(selected[e.from] && selected[e.to]) indegree[e.to] = (indegree[e.to] || 0) + 1; }); var queue = ids.filter(function(id){ return selected[id] && indegree[id] === 0; }); var ordered = []; while(queue.length){ var id = queue.shift(); ordered.push(id); (next[id] || []).forEach(function(to){ if(!selected[to]) return; indegree[to] -= 1; if(indegree[to] === 0) queue.push(to); }); } return ordered; } var defaults = {}; var edges = []; (api.data.dependencyRows || []).forEach(function(row){ if(!row || !row.nodeId) return; splitIds(row.dependsOn).forEach(function(dep){ edges.push(compact({ from: dep, to: row.nodeId, dataKey: row.dataKey })); }); }); api.data.edges = edges; (api.data.nodes || []).forEach(function(node){ node.type = 'JOB'; delete node.envJson; var selectedClusters = Array.isArray(node.expandClusterCodes) ? node.expandClusterCodes.filter(function(code){ return code; }) : []; if(node.target === 'EDGE' && selectedClusters.length){ var expandKey = node.id + '_clusters'; node.expandBy = expandKey; defaults[expandKey] = selectedClusters.map(function(code){ return { clusterCode: code }; }); delete node.clusterCode; } else { delete node.expandBy; } delete node.expandClusterCodes; node.paramBindings = (node.paramBindings || []).filter(function(item){ return item && item.key; }).map(function(item){ delete item.__refPreview; item.defaultValue = parseValue(item.defaultValue, item.valueType || 'STRING'); item.bindType = 'ENV'; item.bindTarget = item.key; defaults[item.key] = item.defaultValue; return compact(item); }); compact(node); }); api.data.loops = (api.data.loopRows || []).filter(function(row){ return row && row.id && row.startNode && row.endNode && row.countParam; }).map(function(row){ defaults[row.countParam] = parseValue(row.countDefault, row.countValueType || 'NUMBER'); return compact({ id: row.id, countParam: row.countParam, start: 1, nodeIds: deriveLoopNodes(row.startNode, row.endNode, edges, api.data.nodes), nextFrom: row.endNode, dataKey: row.dataKey }); }); api.data.defaultParams = defaults; api.data.modelType = api.data.modelType || 'MIXED'; api.data.policy = { runtime: 'K8S_MULTI', timeoutSeconds: Number(api.data.timeoutSeconds || 1800), autoCleanup: api.data.autoCleanup !== false }; api.data.splitRule = { ruleName: (api.data.templateName || api.data.templateCode || 'flow') + ' split rule', ruleType: 'MIXED_DAG', description: api.data.description || '', params: {} }; delete api.data.dependencyRows; delete api.data.loopRows; delete api.data.parallelRows; delete api.data.runtime; delete api.data.timeoutSeconds; delete api.data.autoCleanup; return api;",
+                "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
+                "messages": {
+                  "success": "编排模板已保存"
+                }
+              },
+              "actions": [
+                {
+                  "type": "button",
+                  "label": "预览编排",
+                  "level": "info",
+                  "actionType": "dialog",
+                  "dialog": {
+                    "title": "本模板执行计划预览",
+                    "size": "xl",
+                    "body": {
+                      "type": "service",
+                      "api": {
+                        "method": "post",
+                        "url": "${API_HOST}/datastream/flow/template/preview",
+                        "requestAdaptor": "function parseValue(value, type){ if(value === undefined || value === null || value === '') return value; if(type === 'NUMBER') return Number(value); if(type === 'BOOLEAN') return value === true || value === 'true'; if(type === 'JSON') return typeof value === 'string' ? JSON.parse(value) : value; return value; } function compact(obj){ Object.keys(obj).forEach(function(key){ if(obj[key] === undefined || obj[key] === null || obj[key] === '') delete obj[key]; }); return obj; } function splitIds(value){ return String(value || '').split(',').map(function(item){ return item.trim(); }).filter(Boolean); } function deriveLoopNodes(startValue, endValue, edges, nodes){ var starts = splitIds(startValue); var end = String(endValue || '').trim(); if(!starts.length || !end) return []; var ids = (nodes || []).map(function(n){ return n.id; }).filter(Boolean); var next = {}; var prev = {}; ids.forEach(function(id){ next[id] = []; prev[id] = []; }); (edges || []).forEach(function(e){ if(next[e.from]) next[e.from].push(e.to); if(prev[e.to]) prev[e.to].push(e.from); }); var reach = {}; function walkForward(id){ if(reach[id]) return; reach[id] = true; (next[id] || []).forEach(walkForward); } starts.forEach(walkForward); var canEnd = {}; function walkBack(id){ if(canEnd[id]) return; canEnd[id] = true; (prev[id] || []).forEach(walkBack); } walkBack(end); var selected = {}; ids.forEach(function(id){ if(reach[id] && canEnd[id]) selected[id] = true; }); var indegree = {}; ids.forEach(function(id){ if(selected[id]) indegree[id] = 0; }); (edges || []).forEach(function(e){ if(selected[e.from] && selected[e.to]) indegree[e.to] = (indegree[e.to] || 0) + 1; }); var queue = ids.filter(function(id){ return selected[id] && indegree[id] === 0; }); var ordered = []; while(queue.length){ var id = queue.shift(); ordered.push(id); (next[id] || []).forEach(function(to){ if(!selected[to]) return; indegree[to] -= 1; if(indegree[to] === 0) queue.push(to); }); } return ordered; } var defaults = {}; var edges = []; (api.data.dependencyRows || []).forEach(function(row){ if(!row || !row.nodeId) return; splitIds(row.dependsOn).forEach(function(dep){ edges.push(compact({ from: dep, to: row.nodeId, dataKey: row.dataKey })); }); }); api.data.edges = edges; (api.data.nodes || []).forEach(function(node){ node.type = 'JOB'; delete node.envJson; var selectedClusters = Array.isArray(node.expandClusterCodes) ? node.expandClusterCodes.filter(function(code){ return code; }) : []; if(node.target === 'EDGE' && selectedClusters.length){ var expandKey = node.id + '_clusters'; node.expandBy = expandKey; defaults[expandKey] = selectedClusters.map(function(code){ return { clusterCode: code }; }); delete node.clusterCode; } else { delete node.expandBy; } delete node.expandClusterCodes; node.paramBindings = (node.paramBindings || []).filter(function(item){ return item && item.key; }).map(function(item){ delete item.__refPreview; item.defaultValue = parseValue(item.defaultValue, item.valueType || 'STRING'); item.bindType = 'ENV'; item.bindTarget = item.key; defaults[item.key] = item.defaultValue; return compact(item); }); compact(node); }); api.data.loops = (api.data.loopRows || []).filter(function(row){ return row && row.id && row.startNode && row.endNode && row.countParam; }).map(function(row){ defaults[row.countParam] = parseValue(row.countDefault, row.countValueType || 'NUMBER'); return compact({ id: row.id, countParam: row.countParam, start: 1, nodeIds: deriveLoopNodes(row.startNode, row.endNode, edges, api.data.nodes), nextFrom: row.endNode, dataKey: row.dataKey }); }); api.data.defaultParams = defaults; api.data.modelType = api.data.modelType || 'MIXED'; api.data.policy = { runtime: 'K8S_MULTI', timeoutSeconds: Number(api.data.timeoutSeconds || 1800), autoCleanup: api.data.autoCleanup !== false }; api.data.splitRule = { ruleName: (api.data.templateName || api.data.templateCode || 'flow') + ' split rule', ruleType: 'MIXED_DAG', description: api.data.description || '', params: {} }; delete api.data.dependencyRows; delete api.data.loopRows; delete api.data.parallelRows; delete api.data.runtime; delete api.data.timeoutSeconds; delete api.data.autoCleanup; return api;",
+                        "adaptor": "var data = payload.data || {}; var rows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ rows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = rows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                      },
+                      "body": [
+                        {
+                          "type": "table",
+                          "source": "${levelRows}",
+                          "columns": [
+                            {
+                              "name": "level",
+                              "label": "层级",
+                              "width": 70
+                            },
+                            {
+                              "name": "taskId",
+                              "label": "子任务 ID",
+                              "width": 150
+                            },
+                            {
+                              "name": "taskName",
+                              "label": "子任务名称"
+                            },
+                            {
+                              "name": "taskType",
+                              "label": "执行方式",
+                              "width": 120
+                            },
+                            {
+                              "name": "executor",
+                              "label": "位置",
+                              "width": 90
+                            },
+                            {
+                              "name": "parallelGroup",
+                              "label": "并行",
+                              "width": 70
+                            },
+                            {
+                              "name": "inputPath",
+                              "label": "中间数据输入路径",
+                              "description": "只表示上游子任务产出的中间数据输入路径，可引用 ${参数名}、{{round}}、{{prevRound}}。"
+                            },
+                            {
+                              "name": "outputPath",
+                              "label": "中间数据输出路径",
+                              "description": "只表示本子任务产出的中间数据输出路径，可引用 ${参数名}、{{round}}。"
+                            },
+                            {
+                              "name": "expandedTasks",
+                              "label": "展开结果"
+                            }
+                          ]
+                        }
+                      ]
+                    }
                   }
                 },
-                "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
-              },
+                {
+                  "type": "submit",
+                  "label": "保存模板",
+                  "level": "primary"
+                },
+                {
+                  "type": "reset",
+                  "label": "重置"
+                }
+              ],
               "body": [
                 {
                   "type": "tabs",
@@ -52,134 +129,405 @@
                     {
                       "title": "基础信息",
                       "body": [
-                        { "type": "input-text", "name": "templateCode", "label": "模板编码", "value": "custom-flow-template", "required": true },
-                        { "type": "input-text", "name": "templateName", "label": "模板名称", "value": "自定义流任务模板", "required": true },
-                        { "type": "input-text", "name": "taskType", "label": "任务类型", "value": "CUSTOM_FLOW", "required": true },
-                        { "type": "hidden", "name": "modelType", "value": "MIXED" },
-                        { "type": "textarea", "name": "description", "label": "说明", "value": "以子任务为核心定义镜像、运行位置、参数绑定和依赖关系；执行顺序由依赖关系决定。" },
                         {
-                          "type": "input-kv",
-                          "name": "defaultParams",
-                          "label": "实例默认值",
-                          "description": "只放任务实例级参数；子任务参数在子任务内维护。",
-                          "value": {
-                            "taskName": "custom-flow-demo",
-                            "namespace": "flow-demo"
-                          }
+                          "type": "fieldset",
+                          "title": "模板标识",
+                          "body": [
+                            {
+                              "type": "grid",
+                              "columns": [
+                                {
+                                  "md": 4,
+                                  "body": {
+                                    "type": "input-text",
+                                    "name": "templateCode",
+                                    "label": "模板编码",
+                                    "required": true,
+                                    "placeholder": "fedavg-flow-custom"
+                                  }
+                                },
+                                {
+                                  "md": 4,
+                                  "body": {
+                                    "type": "input-text",
+                                    "name": "templateName",
+                                    "label": "模板名称",
+                                    "required": true,
+                                    "placeholder": "通用流任务编排模板"
+                                  }
+                                },
+                                {
+                                  "md": 4,
+                                  "body": {
+                                    "type": "input-text",
+                                    "name": "taskType",
+                                    "label": "任务类型",
+                                    "placeholder": "FEDERATED_LEARNING_FEDAVG"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "hidden",
+                              "name": "modelType",
+                              "value": "MIXED"
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "description",
+                              "label": "描述",
+                              "minRows": 2,
+                              "maxRows": 4
+                            }
+                          ]
                         },
-                        { "type": "input-number", "name": "policy.retryTimes", "label": "重试次数", "value": 1, "min": 0 },
-                        { "type": "input-number", "name": "policy.timeoutSeconds", "label": "超时秒数", "value": 1800, "min": 1 },
-                        { "type": "switch", "name": "policy.autoCleanup", "label": "完成清理", "value": true }
+                        {
+                          "type": "fieldset",
+                          "title": "运行配置",
+                          "body": [
+                            {
+                              "type": "grid",
+                              "columns": [
+                                {
+                                  "md": 4,
+                                  "body": {
+                                    "type": "input-number",
+                                    "name": "timeoutSeconds",
+                                    "label": "超时(秒)",
+                                    "min": 1
+                                  }
+                                },
+                                {
+                                  "md": 4,
+                                  "body": {
+                                    "type": "switch",
+                                    "name": "autoCleanup",
+                                    "label": "完成后释放资源"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
                       ]
                     },
                     {
-                      "title": "子任务",
+                      "title": "子任务定义",
                       "body": [
                         {
                           "type": "combo",
                           "name": "nodes",
-                          "label": "子任务",
+                          "label": false,
                           "multiple": true,
-                          "multiLine": true,
+                          "addable": true,
+                          "removable": true,
                           "draggable": true,
-                          "required": true,
-                          "value": [],
+                          "multiLine": true,
+                          "minLength": 1,
                           "items": [
-                            { "type": "input-text", "name": "id", "label": "ID", "required": true },
-                            { "type": "input-text", "name": "name", "label": "名称", "required": true },
                             {
-                              "type": "select",
-                              "name": "type",
-                              "label": "类型",
-                              "value": "JOB",
-                              "required": true,
-                              "options": [
-                                { "label": "Service", "value": "SERVICE" },
-                                { "label": "Job", "value": "JOB" },
-                                { "label": "并行组", "value": "PARALLEL_GROUP" }
+                              "type": "fieldset",
+                              "title": "子任务基础",
+                              "body": [
+                                {
+                                  "type": "grid",
+                                  "columns": [
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "id",
+                                        "label": "子任务 ID",
+                                        "required": true,
+                                        "placeholder": "train-r1"
+                                      }
+                                    },
+                                    {
+                                      "md": 4,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "name",
+                                        "label": "名称",
+                                        "required": true
+                                      }
+                                    },
+                                    {
+                                      "md": 5,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "image",
+                                        "label": "镜像",
+                                        "placeholder": "fedavg-client-train",
+                                        "required": true
+                                      }
+                                    }
+                                  ]
+                                }
                               ]
                             },
                             {
-                              "type": "select",
-                              "name": "target",
-                              "label": "位置",
-                              "value": "EDGE",
-                              "options": [
-                                { "label": "中心云", "value": "CLOUD" },
-                                { "label": "边缘云", "value": "EDGE" },
-                                { "label": "端设备", "value": "TERMINAL" },
-                                { "label": "不限", "value": "ANY" }
+                              "type": "fieldset",
+                              "title": "调度位置",
+                              "body": [
+                                {
+                                  "type": "grid",
+                                  "columns": [
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "select",
+                                        "name": "target",
+                                        "label": "运行位置",
+                                        "value": "EDGE",
+                                        "options": [
+                                          {
+                                            "label": "中心云",
+                                            "value": "CLOUD"
+                                          },
+                                          {
+                                            "label": "边缘云",
+                                            "value": "EDGE"
+                                          },
+                                          {
+                                            "label": "端设备",
+                                            "value": "TERMINAL"
+                                          },
+                                          {
+                                            "label": "任意",
+                                            "value": "ANY"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "md": 4,
+                                      "body": {
+                                        "type": "select",
+                                        "name": "clusterCode",
+                                        "label": "指定中心云",
+                                        "clearable": true,
+                                        "source": {
+                                          "method": "get",
+                                          "url": "${API_HOST}/datastream/flow/template/cluster/options?target=${target}",
+                                          "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: payload.data || [] } };"
+                                        },
+                                        "visibleOn": "this.target !== 'EDGE'"
+                                      }
+                                    },
+                                    {
+                                      "md": 4,
+                                      "body": {
+                                        "type": "select",
+                                        "name": "expandClusterCodes",
+                                        "label": "并行边缘集群",
+                                        "multiple": true,
+                                        "joinValues": false,
+                                        "extractValue": true,
+                                        "clearable": true,
+                                        "visibleOn": "this.target === 'EDGE'",
+                                        "source": {
+                                          "method": "get",
+                                          "url": "${API_HOST}/datastream/flow/template/cluster/options?target=EDGE",
+                                          "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: payload.data || [] } };"
+                                        },
+                                        "description": "选择多个边缘集群时，该子任务会在每个边缘集群各启动一个 Job。"
+                                      }
+                                    },
+                                    {
+                                      "md": 2,
+                                      "body": {
+                                        "type": "input-number",
+                                        "name": "priority",
+                                        "label": "排序",
+                                        "value": 0
+                                      }
+                                    },
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-number",
+                                        "name": "replicas",
+                                        "label": "副本数",
+                                        "min": 1,
+                                        "placeholder": "默认 1"
+                                      }
+                                    }
+                                  ]
+                                }
                               ]
                             },
-                            { "type": "input-text", "name": "image", "label": "镜像", "required": true },
-                            { "type": "input-number", "name": "servicePort", "label": "端口", "value": 8080, "min": 1, "visibleOn": "this.type === 'SERVICE'" },
-                            { "type": "input-number", "name": "replicas", "label": "副本", "min": 1, "visibleOn": "this.type === 'SERVICE' || this.type === 'JOB'" },
-                            { "type": "input-text", "name": "replicasExpression", "label": "并行数", "placeholder": "${clientCount}", "visibleOn": "this.type === 'PARALLEL_GROUP'" },
-                            { "type": "input-number", "name": "priority", "label": "优先级", "value": 0 },
                             {
-                              "type": "combo",
-                              "name": "paramBindings",
-                              "label": "参数绑定",
-                              "description": "从左到右：参数名、显示名、默认值、值类型、用途、绑定目标、是否必填、说明。例如镜像参数：serverImage / 聚合服务镜像 / fedavg-server / 文本 / 镜像 / image。",
-                              "multiple": true,
-                              "inline": true,
-                              "draggable": true,
-                              "items": [
-                                { "type": "input-text", "name": "key", "placeholder": "参数名", "required": true },
-                                { "type": "input-text", "name": "label", "placeholder": "显示名" },
-                                { "type": "input-text", "name": "defaultValue", "placeholder": "默认值" },
+                              "type": "fieldset",
+                              "title": "服务与数据",
+                              "body": [
                                 {
-                                  "type": "select",
-                                  "name": "valueType",
-                                  "value": "STRING",
-                                  "options": [
-                                    { "label": "文本", "value": "STRING" },
-                                    { "label": "数字", "value": "NUMBER" },
-                                    { "label": "布尔", "value": "BOOLEAN" }
+                                  "type": "grid",
+                                  "columns": [
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "serviceName",
+                                        "label": "Service 名称",
+                                        "placeholder": "可为空"
+                                      }
+                                    },
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-number",
+                                        "name": "servicePort",
+                                        "label": "端口",
+                                        "value": 8080
+                                      }
+                                    },
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "select",
+                                        "name": "serviceType",
+                                        "label": "服务类型",
+                                        "value": "ClusterIP",
+                                        "options": [
+                                          {
+                                            "label": "ClusterIP",
+                                            "value": "ClusterIP"
+                                          },
+                                          {
+                                            "label": "NodePort",
+                                            "value": "NodePort"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-number",
+                                        "name": "nodePort",
+                                        "label": "NodePort",
+                                        "visibleOn": "this.serviceType === 'NodePort'"
+                                      }
+                                    }
                                   ]
                                 },
                                 {
-                                  "type": "select",
-                                  "name": "bindType",
-                                  "value": "ENV",
-                                  "options": [
-                                    { "label": "镜像", "value": "IMAGE" },
-                                    { "label": "环境变量", "value": "ENV" },
-                                    { "label": "并行数量", "value": "REPLICAS" },
-                                    { "label": "运行参数", "value": "RUNTIME" }
+                                  "type": "grid",
+                                  "columns": [
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "switch",
+                                        "name": "needDataset",
+                                        "label": "需要数据集",
+                                        "description": "开启后，后端按任务选择的数据集和子任务所在边缘集群，自动注入该边缘云唯一数据分片的 DATA_PATH。"
+                                      }
+                                    },
+                                    {
+                                      "md": 5,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "datasetPathEnv",
+                                        "label": "路径环境变量",
+                                        "value": "DATA_PATH",
+                                        "visibleOn": "this.needDataset",
+                                        "description": "数据集路径注入到哪个环境变量，默认 DATA_PATH。"
+                                      }
+                                    },
+                                    {
+                                      "md": 6,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "inputPath",
+                                        "label": "中间数据输入路径",
+                                        "placeholder": "minio://${MINIO_BUCKET}/${taskName}/global/round-{{prevRound}}/model.bin",
+                                        "description": "只表示上游子任务产出的中间数据输入路径，可引用 ${参数名}、{{round}}、{{prevRound}}。"
+                                      }
+                                    },
+                                    {
+                                      "md": 6,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "outputPath",
+                                        "label": "中间数据输出路径",
+                                        "placeholder": "minio://${MINIO_BUCKET}/${taskName}/updates/round-{{round}}/client-{{globalIndex}}.bin",
+                                        "description": "只表示本子任务产出的中间数据输出路径，可引用 ${参数名}、{{round}}。"
+                                      }
+                                    }
                                   ]
-                                },
-                                { "type": "input-text", "name": "bindTarget", "placeholder": "绑定目标" },
-                                { "type": "switch", "name": "required", "option": "必填" },
-                                { "type": "input-text", "name": "description", "placeholder": "说明" }
+                                }
                               ]
                             },
                             {
-                              "type": "fieldSet",
-                              "title": "高级配置",
-                              "collapsable": true,
-                              "collapsed": true,
-                              "controls": [
-                                { "type": "input-kv", "name": "env", "label": "环境变量" },
+                              "type": "fieldset",
+                              "title": "参数",
+                              "body": [
                                 {
-                                  "type": "combo",
-                                  "name": "command",
-                                  "label": "命令",
-                                  "multiple": true,
-                                  "inline": true,
-                                  "items": [
-                                    { "type": "input-text", "name": "-", "placeholder": "sh" }
-                                  ]
-                                },
-                                {
-                                  "type": "combo",
-                                  "name": "args",
-                                  "label": "参数",
-                                  "multiple": true,
-                                  "inline": true,
-                                  "items": [
-                                    { "type": "input-text", "name": "-", "placeholder": "-c" }
-                                  ]
+                                  "type": "input-table",
+                                  "name": "paramBindings",
+                                  "label": false,
+                                  "addable": true,
+                                  "removable": true,
+                                  "columns": [
+                                    {
+                                      "name": "key",
+                                      "label": "参数名",
+                                      "type": "input-text",
+                                      "required": true,
+                                      "placeholder": "DATASET"
+                                    },
+                                    {
+                                      "name": "__refPreview",
+                                      "label": "引用写法",
+                                      "type": "tpl",
+                                      "tpl": "<code>$&#123;${key}&#125;</code>",
+                                      "width": 130
+                                    },
+                                    {
+                                      "name": "label",
+                                      "label": "显示名",
+                                      "type": "input-text",
+                                      "placeholder": "数据集"
+                                    },
+                                    {
+                                      "name": "valueType",
+                                      "label": "类型",
+                                      "type": "select",
+                                      "value": "STRING",
+                                      "options": [
+                                        {
+                                          "label": "文本",
+                                          "value": "STRING"
+                                        },
+                                        {
+                                          "label": "数字",
+                                          "value": "NUMBER"
+                                        },
+                                        {
+                                          "label": "布尔",
+                                          "value": "BOOLEAN"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "defaultValue",
+                                      "label": "默认值",
+                                      "type": "textarea",
+                                      "minRows": 1,
+                                      "maxRows": 2
+                                    },
+                                    {
+                                      "name": "required",
+                                      "label": "必填",
+                                      "type": "switch"
+                                    },
+                                    {
+                                      "name": "description",
+                                      "label": "说明",
+                                      "type": "input-text"
+                                    }
+                                  ],
+                                  "description": "这里定义的是该子任务需要的运行参数。参数会自动注入为同名环境变量；在数据路径、输入路径、输出路径中可按“引用写法”使用。"
                                 }
                               ]
                             }
@@ -191,17 +539,104 @@
                       "title": "依赖关系",
                       "body": [
                         {
-                          "type": "combo",
-                          "name": "edges",
-                          "label": "依赖关系",
-                          "multiple": true,
-                          "inline": true,
-                          "draggable": true,
-                          "value": [],
-                          "items": [
-                            { "type": "select", "name": "from", "placeholder": "前置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
-                            { "type": "select", "name": "to", "placeholder": "后置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
-                            { "type": "input-text", "name": "dataKey", "placeholder": "协同数据" }
+                          "type": "fieldset",
+                          "title": "前置依赖",
+                          "body": [
+                            {
+                              "type": "input-table",
+                              "name": "dependencyRows",
+                              "label": false,
+                              "addable": true,
+                              "removable": true,
+                              "columns": [
+                                {
+                                  "name": "nodeId",
+                                  "label": "子任务",
+                                  "type": "input-text",
+                                  "required": true,
+                                  "placeholder": "aggregate-r1"
+                                },
+                                {
+                                  "name": "dependsOn",
+                                  "label": "前置任务",
+                                  "type": "input-text",
+                                  "placeholder": "client-train-r1"
+                                },
+                                {
+                                  "name": "dataKey",
+                                  "label": "依赖说明",
+                                  "type": "input-text",
+                                  "placeholder": "client-updates"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "fieldset",
+                          "title": "循环设置",
+                          "body": [
+                            {
+                              "type": "input-table",
+                              "name": "loopRows",
+                              "label": false,
+                              "addable": true,
+                              "removable": true,
+                              "columns": [
+                                {
+                                  "name": "id",
+                                  "label": "循环 ID",
+                                  "type": "input-text",
+                                  "placeholder": "round-loop"
+                                },
+                                {
+                                  "name": "startNode",
+                                  "label": "起始任务",
+                                  "type": "input-text",
+                                  "placeholder": "client-train-r1"
+                                },
+                                {
+                                  "name": "endNode",
+                                  "label": "结束任务",
+                                  "type": "input-text",
+                                  "placeholder": "aggregate-r1"
+                                },
+                                {
+                                  "name": "countParam",
+                                  "label": "循环次数参数",
+                                  "type": "input-text",
+                                  "placeholder": "ROUNDS"
+                                },
+                                {
+                                  "name": "countDefault",
+                                  "label": "默认次数",
+                                  "type": "input-number",
+                                  "value": 3
+                                },
+                                {
+                                  "name": "countValueType",
+                                  "label": "参数类型",
+                                  "type": "select",
+                                  "value": "NUMBER",
+                                  "options": [
+                                    {
+                                      "label": "数字",
+                                      "value": "NUMBER"
+                                    },
+                                    {
+                                      "label": "文本",
+                                      "value": "STRING"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "dataKey",
+                                  "label": "跨轮说明",
+                                  "type": "input-text",
+                                  "placeholder": "next-round"
+                                }
+                              ]
+                            }
                           ]
                         }
                       ]
@@ -210,278 +645,154 @@
                 }
               ]
             }
-          },
-          "reload": "flow-template-list"
-        },
-        { "type": "reload", "label": "刷新", "level": "default" }
+          }
+        }
       ],
       "columns": [
-        { "name": "templateCode", "label": "模板编码", "align": "center" },
-        { "name": "templateName", "label": "模板名称", "align": "center" },
-        { "name": "taskType", "label": "任务类型", "align": "center" },
-        { "name": "nodes", "label": "子任务", "type": "tpl", "tpl": "${nodes.length || 0}", "align": "center" },
-        { "name": "edges", "label": "依赖", "type": "tpl", "tpl": "${edges.length || 0}", "align": "center" },
+        {
+          "name": "templateCode",
+          "label": "模板编码",
+          "width": 170
+        },
+        {
+          "name": "templateName",
+          "label": "模板名称"
+        },
+        {
+          "name": "taskType",
+          "label": "任务类型",
+          "width": 180
+        },
+        {
+          "name": "modelType",
+          "label": "流程形态",
+          "width": 100
+        },
         {
           "type": "operation",
           "label": "操作",
-          "width": 420,
+          "width": 260,
           "buttons": [
             {
               "type": "button",
-              "label": "编辑",
-              "level": "primary",
+              "label": "预览",
+              "level": "link",
               "actionType": "dialog",
               "dialog": {
-                "title": "编辑流任务编排模板 - ${templateCode}",
+                "title": "执行计划预览",
                 "size": "xl",
                 "body": {
-                  "type": "form",
-                  "mode": "horizontal",
-                  "horizontal": { "left": 2, "right": 10 },
-                  "initApi": {
-                    "method": "get",
-                    "url": "${API_HOST}/datastream/flow/template/detail?templateCode=${templateCode}",
-                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
-                  },
+                  "type": "service",
                   "api": {
-                    "method": "post",
-                    "url": "${API_HOST}/datastream/flow/template/save",
-                    "data": {
-                      "templateCode": "${templateCode}",
-                      "templateName": "${templateName}",
-                      "description": "${description}",
-                      "taskType": "${taskType}",
-                      "modelType": "${modelType}",
-                      "defaultParams": "${defaultParams}",
-                      "nodes": "${nodes}",
-                      "edges": "${edges}",
-                      "policy": {
-                        "retryTimes": "${policy.retryTimes}",
-                        "timeoutSeconds": "${policy.timeoutSeconds}",
-                        "autoCleanup": "${policy.autoCleanup}",
-                        "runtime": "ARGO"
-                      }
-                    },
-                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
+                    "method": "get",
+                    "url": "${API_HOST}/datastream/flow/template/preview?templateCode=${templateCode}",
+                    "adaptor": "var data = payload.data || {}; var rows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ rows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = rows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
                   },
                   "body": [
                     {
-                      "type": "tabs",
-                      "tabs": [
+                      "type": "table",
+                      "source": "${levelRows}",
+                      "columns": [
                         {
-                          "title": "基础信息",
-                          "body": [
-                            { "type": "input-text", "name": "templateCode", "label": "模板编码", "required": true, "disabled": true },
-                            { "type": "input-text", "name": "templateName", "label": "模板名称", "required": true },
-                            { "type": "input-text", "name": "taskType", "label": "任务类型", "required": true },
-                            { "type": "hidden", "name": "modelType", "value": "MIXED" },
-                            { "type": "textarea", "name": "description", "label": "说明" },
-                            { "type": "input-kv", "name": "defaultParams", "label": "实例默认值" },
-                            { "type": "input-number", "name": "policy.retryTimes", "label": "重试次数", "min": 0 },
-                            { "type": "input-number", "name": "policy.timeoutSeconds", "label": "超时秒数", "min": 1 },
-                            { "type": "switch", "name": "policy.autoCleanup", "label": "完成清理" }
-                          ]
+                          "name": "level",
+                          "label": "层级",
+                          "width": 70
                         },
                         {
-                          "title": "子任务",
-                          "body": [
-                            {
-                              "type": "combo",
-                              "name": "nodes",
-                              "label": "子任务",
-                              "multiple": true,
-                              "multiLine": true,
-                              "draggable": true,
-                              "required": true,
-                              "items": [
-                                { "type": "input-text", "name": "id", "label": "ID", "required": true },
-                                { "type": "input-text", "name": "name", "label": "名称", "required": true },
-                                {
-                                  "type": "select",
-                                  "name": "type",
-                                  "label": "类型",
-                                  "required": true,
-                                  "options": [
-                                    { "label": "Service", "value": "SERVICE" },
-                                    { "label": "Job", "value": "JOB" },
-                                    { "label": "并行组", "value": "PARALLEL_GROUP" }
-                                  ]
-                                },
-                                {
-                                  "type": "select",
-                                  "name": "target",
-                                  "label": "位置",
-                                  "options": [
-                                    { "label": "中心云", "value": "CLOUD" },
-                                    { "label": "边缘云", "value": "EDGE" },
-                                    { "label": "端设备", "value": "TERMINAL" },
-                                    { "label": "不限", "value": "ANY" }
-                                  ]
-                                },
-                                { "type": "input-text", "name": "image", "label": "镜像" },
-                                { "type": "input-number", "name": "servicePort", "label": "端口", "min": 1, "visibleOn": "this.type === 'SERVICE'" },
-                                { "type": "input-number", "name": "replicas", "label": "副本", "min": 1, "visibleOn": "this.type === 'SERVICE' || this.type === 'JOB'" },
-                                { "type": "input-text", "name": "replicasExpression", "label": "并行数", "placeholder": "${clientCount}", "visibleOn": "this.type === 'PARALLEL_GROUP'" },
-                                { "type": "input-number", "name": "priority", "label": "优先级" },
-                                {
-                                  "type": "combo",
-                                  "name": "paramBindings",
-                                  "label": "参数绑定",
-                                  "description": "从左到右：参数名、显示名、默认值、值类型、用途、绑定目标、是否必填、说明。例如环境变量参数：rounds / 训练轮次 / 3 / 数字 / 环境变量 / ROUNDS。",
-                                  "multiple": true,
-                                  "inline": true,
-                                  "draggable": true,
-                                  "items": [
-                                    { "type": "input-text", "name": "key", "placeholder": "参数名", "required": true },
-                                    { "type": "input-text", "name": "label", "placeholder": "显示名" },
-                                    { "type": "input-text", "name": "defaultValue", "placeholder": "默认值" },
-                                    { "type": "select", "name": "valueType", "value": "STRING", "options": [{ "label": "文本", "value": "STRING" }, { "label": "数字", "value": "NUMBER" }, { "label": "布尔", "value": "BOOLEAN" }] },
-                                    { "type": "select", "name": "bindType", "value": "ENV", "options": [{ "label": "镜像", "value": "IMAGE" }, { "label": "环境变量", "value": "ENV" }, { "label": "并行数量", "value": "REPLICAS" }, { "label": "运行参数", "value": "RUNTIME" }] },
-                                    { "type": "input-text", "name": "bindTarget", "placeholder": "绑定目标" },
-                                    { "type": "switch", "name": "required", "option": "必填" },
-                                    { "type": "input-text", "name": "description", "placeholder": "说明" }
-                                  ]
-                                },
-                                {
-                                  "type": "fieldSet",
-                                  "title": "高级配置",
-                                  "collapsable": true,
-                                  "collapsed": true,
-                                  "controls": [
-                                    { "type": "input-kv", "name": "env", "label": "环境变量" },
-                                    {
-                                      "type": "combo",
-                                      "name": "command",
-                                      "label": "命令",
-                                      "multiple": true,
-                                      "inline": true,
-                                      "items": [
-                                        { "type": "input-text", "name": "-", "placeholder": "sh" }
-                                      ]
-                                    },
-                                    {
-                                      "type": "combo",
-                                      "name": "args",
-                                      "label": "参数",
-                                      "multiple": true,
-                                      "inline": true,
-                                      "items": [
-                                        { "type": "input-text", "name": "-", "placeholder": "-c" }
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
+                          "name": "taskId",
+                          "label": "子任务 ID",
+                          "width": 150
                         },
                         {
-                          "title": "依赖关系",
-                          "body": [
-                            {
-                              "type": "combo",
-                              "name": "edges",
-                              "label": "依赖关系",
-                              "multiple": true,
-                              "inline": true,
-                              "draggable": true,
-                              "items": [
-                                { "type": "select", "name": "from", "placeholder": "前置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
-                                { "type": "select", "name": "to", "placeholder": "后置子任务", "source": "${nodes}", "labelField": "name", "valueField": "id", "required": true },
-                                { "type": "input-text", "name": "dataKey", "placeholder": "协同数据" }
-                              ]
-                            }
-                          ]
+                          "name": "taskName",
+                          "label": "子任务名称"
+                        },
+                        {
+                          "name": "taskType",
+                          "label": "执行方式",
+                          "width": 120
+                        },
+                        {
+                          "name": "executor",
+                          "label": "位置",
+                          "width": 90
+                        },
+                        {
+                          "name": "parallelGroup",
+                          "label": "并行",
+                          "width": 70
+                        },
+                        {
+                          "name": "inputPath",
+                          "label": "中间数据输入路径",
+                          "description": "只表示上游子任务产出的中间数据输入路径，可引用 ${参数名}、{{round}}、{{prevRound}}。"
+                        },
+                        {
+                          "name": "outputPath",
+                          "label": "中间数据输出路径",
+                          "description": "只表示本子任务产出的中间数据输出路径，可引用 ${参数名}、{{round}}。"
+                        },
+                        {
+                          "name": "expandedTasks",
+                          "label": "展开结果"
                         }
                       ]
                     }
                   ]
                 }
-              },
-              "reload": "flow-template-list"
+              }
             },
             {
               "type": "button",
-              "label": "预览",
-              "level": "info",
+              "label": "编辑 JSON",
+              "level": "link",
               "actionType": "dialog",
               "dialog": {
-                "title": "执行计划预览 - ${templateCode}",
+                "title": "编辑模板 JSON",
                 "size": "xl",
                 "body": {
-                  "type": "service",
+                  "type": "form",
+                  "initApi": {
+                    "method": "get",
+                    "url": "${API_HOST}/datastream/flow/template/detail?templateCode=${templateCode}",
+                    "adaptor": "var data = payload.data || {}; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateJson: JSON.stringify(data, null, 2) } };"
+                  },
                   "api": {
                     "method": "post",
-                    "url": "${API_HOST}/datastream/flow/template/preview",
-                    "data": {
-                      "templateCode": "${templateCode}",
-                      "templateName": "${templateName}",
-                      "description": "${description}",
-                      "taskType": "${taskType}",
-                      "modelType": "${modelType}",
-                      "defaultParams": "${defaultParams}",
-                      "nodes": "${nodes}",
-                      "edges": "${edges}",
-                      "policy": "${policy}"
-                    },
-                    "adaptor": "var data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', ') }); }); }); data.levelRows = levelRows; var split = data.splitRule || {}; var splitParams = split.params || {}; data.splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, nodeType: group.nodeType, executor: group.executor, key: item.key, label: item.label, value: item.value, bindType: item.bindType, bindTarget: item.bindTarget, description: item.description }); }); }); data.paramRows = paramRows; data.workflowJson = JSON.stringify(data.workflow || {}, null, 2); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                    "url": "${API_HOST}/datastream/flow/template/save",
+                    "requestAdaptor": "api.data = JSON.parse(api.data.templateJson || '{}'); return api;",
+                    "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
+                    "messages": {
+                      "success": "模板已更新"
+                    }
                   },
                   "body": [
-                    { "type": "divider", "title": "拆分项" },
                     {
-                      "type": "table",
-                      "source": "${splitItems}",
-                      "columns": [
-                        { "name": "id", "label": "编号", "width": 80 },
-                        { "name": "name", "label": "子任务" }
-                      ]
-                    },
-                    { "type": "divider", "title": "参数使用关系" },
-                    {
-                      "type": "table",
-                      "source": "${paramRows}",
-                      "columns": [
-                        { "name": "nodeName", "label": "子任务", "width": 150 },
-                        { "name": "key", "label": "参数", "width": 130 },
-                        { "name": "value", "label": "值", "width": 100 },
-                        { "name": "bindType", "label": "用途", "width": 100 },
-                        { "name": "bindTarget", "label": "绑定目标", "width": 130 },
-                        { "name": "description", "label": "说明" }
-                      ]
-                    },
-                    { "type": "divider", "title": "执行层级" },
-                    {
-                      "type": "table",
-                      "source": "${levelRows}",
-                      "columns": [
-                        { "name": "level", "label": "层级", "width": 70 },
-                        { "name": "taskId", "label": "子任务 ID", "width": 140 },
-                        { "name": "taskName", "label": "子任务名称" },
-                        { "name": "taskType", "label": "类型", "width": 130 },
-                        { "name": "executor", "label": "位置", "width": 90 },
-                        { "name": "parallelGroup", "label": "并行", "width": 70 },
-                        { "name": "expandedTasks", "label": "展开" }
-                      ]
-                    },
-                    { "type": "divider", "title": "Argo Workflow" },
-                    { "type": "editor", "name": "workflowJson", "language": "json", "disabled": true, "size": "lg" }
+                      "type": "editor",
+                      "name": "templateJson",
+                      "language": "json",
+                      "size": "xl",
+                      "required": true
+                    }
                   ]
                 }
               }
             },
-            { "type": "button", "label": "创建任务", "level": "link", "actionType": "link", "link": "/flow/task/create" },
             {
               "type": "button",
               "label": "删除",
-              "level": "danger",
+              "level": "link",
+              "className": "text-danger",
+              "confirmText": "确认删除该编排模板？",
               "actionType": "ajax",
-              "confirmText": "确认删除模板 ${templateCode}？",
               "api": {
                 "method": "get",
                 "url": "${API_HOST}/datastream/flow/template/delete?templateCode=${templateCode}",
-                "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };"
-              },
-              "reload": "flow-template-list"
+                "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message };",
+                "messages": {
+                  "success": "模板已删除"
+                }
+              }
             }
           ]
         }

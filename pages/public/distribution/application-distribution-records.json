@@ -1,0 +1,59 @@
+{
+  "type": "page",
+  "name": "application-distribution-records",
+  "title": "\u5e94\u7528\u5206\u53d1\u8bb0\u5f55",
+  "body": [
+    {
+      "type": "crud",
+      "name": "distribution-record-list",
+      "headerToolbar": [
+        { "type": "reload", "align": "left", "icon": "iconfont icon-refresh", "label": "\u5237\u65b0", "level": "primary" },
+        { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
+      ],
+      "api": {
+        "url": "${API_HOST}/distribution/records",
+        "method": "get"
+      },
+      "columns": [
+        { "name": "appName", "label": "\u5e94\u7528", "align": "center" },
+        { "name": "image", "label": "\u955c\u50cf", "align": "center" },
+        { "name": "version", "label": "\u7248\u672c", "align": "center" },
+        { "name": "targetCluster", "label": "\u76ee\u6807\u96c6\u7fa4", "align": "center" },
+        {
+          "name": "clusterRole",
+          "label": "\u89d2\u8272",
+          "type": "mapping",
+          "map": {
+            "CLOUD": "\u4e2d\u5fc3\u4e91",
+            "EDGE": "\u8fb9\u7f18\u4e91",
+            "GENERAL": "\u901a\u7528\u96c6\u7fa4",
+            "*": "${clusterRole}"
+          },
+          "align": "center"
+        },
+        { "name": "namespace", "label": "Namespace", "align": "center" },
+        { "name": "workloadType", "label": "\u8d1f\u8f7d\u7c7b\u578b", "align": "center" },
+        { "name": "workloadName", "label": "\u8d1f\u8f7d", "align": "center" },
+        {
+          "name": "status",
+          "label": "\u72b6\u6001",
+          "type": "mapping",
+          "map": {
+            "RUNNING": "<span class='label label-success'>RUNNING</span>",
+            "DEPLOYING": "<span class='label label-warning'>DEPLOYING</span>",
+            "UNKNOWN": "<span class='label label-default'>UNKNOWN</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          },
+          "align": "center"
+        },
+        { "name": "replicas", "label": "\u526f\u672c", "align": "center" },
+        { "name": "readyReplicas", "label": "\u5c31\u7eea", "align": "center" },
+        { "name": "creationTime", "label": "\u5206\u53d1\u65f6\u95f4", "align": "center" }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "\u6682\u65e0\u6570\u636e",
+      "tableClassName": "table-db table-striped"
+    }
+  ]
+}

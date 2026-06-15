@@ -1,23 +1,16 @@
 {
   "type": "page",
-  "title": "Create Deployment",
-  "remark": null,
+  "title": "\u521b\u5efa Deployment",
   "toolbar": [
     {
       "type": "button",
       "actionType": "link",
       "link": "/deployment",
-      "label": "Back To Deployment List",
+      "label": "\u8fd4\u56de Deployment \u5217\u8868",
       "level": "primary"
     }
   ],
   "body": [
-    {
-      "type": "alert",
-      "level": "info",
-      "showCloseButton": false,
-      "body": "This form creates a minimal Deployment. If the image is selected from the image list, the image name will be filled automatically."
-    },
     {
       "type": "form",
       "redirect": "/deployment",
@@ -25,6 +18,7 @@
         "method": "post",
         "url": "${API_HOST}/deployment/add",
         "data": {
+          "clusterCode": "${clusterCode}",
           "metadata": {
             "name": "${deploymentName}",
             "namespace": "${namespace}",
@@ -64,47 +58,28 @@
         }
       },
       "actions": [
-        {
-          "type": "submit",
-          "label": "Create",
-          "level": "primary"
-        }
+        { "type": "submit", "label": "\u521b\u5efa", "level": "primary" }
       ],
       "body": [
         {
-          "type": "input-text",
-          "name": "deploymentName",
-          "label": "Deployment Name",
+          "type": "select",
+          "name": "clusterCode",
+          "label": "\u76ee\u6807\u96c6\u7fa4",
+          "source": "${API_HOST}/cluster/options",
+          "value": "cloud-main",
           "required": true
         },
-        {
-          "type": "input-text",
-          "name": "namespace",
-          "label": "Namespace",
-          "required": true
-        },
+        { "type": "input-text", "name": "deploymentName", "label": "Deployment \u540d\u79f0", "required": true },
+        { "type": "input-text", "name": "namespace", "label": "Namespace", "required": true },
         {
           "type": "input-text",
           "name": "image",
-          "label": "Image",
+          "label": "\u955c\u50cf",
           "value": "${params.image}",
-          "required": true,
-          "description": "You can enter a short image name like test or a full registry path."
-        },
-        {
-          "type": "input-number",
-          "name": "replicas",
-          "label": "Replicas",
-          "value": 1,
           "required": true
         },
-        {
-          "type": "input-number",
-          "name": "containerPort",
-          "label": "Container Port",
-          "value": 8080,
-          "required": true
-        }
+        { "type": "input-number", "name": "replicas", "label": "\u526f\u672c\u6570", "value": 1, "required": true },
+        { "type": "input-number", "name": "containerPort", "label": "\u5bb9\u5668\u7aef\u53e3", "value": 8080, "required": true }
       ]
     }
   ]
