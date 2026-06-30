@@ -1,0 +1,75 @@
+{
+  "type": "page",
+  "name": "on-demand-distribution-records",
+  "title": "\u6309\u9700\u5206\u53d1\u8bb0\u5f55",
+  "body": [
+    {
+      "type": "crud",
+      "name": "on-demand-distribution-list",
+      "filter": {
+        "title": "",
+        "mode": "horizontal",
+        "wrapWithPanel": false,
+        "submitText": "\u67e5\u770b",
+        "body": [
+          {
+            "type": "select",
+            "name": "clusterCode",
+            "label": "\u76ee\u6807\u8fb9\u7f18\u4e91",
+            "placeholder": "\u5168\u90e8",
+            "clearable": true,
+            "searchable": false,
+            "submitOnChange": true,
+            "source": {
+              "method": "get",
+              "url": "${API_HOST}/datastream/flow/template/cluster/options?target=EDGE"
+            }
+          }
+        ]
+      },
+      "headerToolbar": [
+        { "type": "reload", "align": "left", "icon": "iconfont icon-refresh", "label": "\u5237\u65b0", "level": "primary" },
+        { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
+      ],
+      "api": {
+        "url": "${API_HOST}/datastream/distribution/on-demand-records",
+        "method": "get",
+        "data": {
+          "clusterCode": "${clusterCode}"
+        }
+      },
+      "columns": [
+        { "name": "policyName", "label": "\u5206\u53d1\u7b56\u7565", "align": "center" },
+        { "name": "triggerCondition", "label": "\u89e6\u53d1\u6761\u4ef6", "align": "center" },
+        { "name": "flowTaskName", "label": "\u89e6\u53d1\u4efb\u52a1", "align": "center" },
+        { "name": "nodeName", "label": "\u89e6\u53d1\u5b50\u4efb\u52a1", "align": "center" },
+        { "name": "appName", "label": "\u5e94\u7528", "align": "center" },
+        { "name": "version", "label": "\u7248\u672c", "align": "center" },
+        { "name": "targetCluster", "label": "\u76ee\u6807\u8fb9\u7f18\u4e91", "align": "center" },
+        {
+          "name": "status",
+          "label": "\u72b6\u6001",
+          "type": "mapping",
+          "map": {
+            "DISTRIBUTING": "<span class='label label-warning'>DISTRIBUTING</span>",
+            "SUCCEEDED": "<span class='label label-success'>SUCCEEDED</span>",
+            "REUSED": "<span class='label label-info'>REUSED</span>",
+            "FAILED": "<span class='label label-danger'>FAILED</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          },
+          "align": "center"
+        },
+        { "name": "startedAt", "label": "\u89e6\u53d1\u65f6\u95f4", "align": "center" },
+        { "name": "finishedAt", "label": "\u5b8c\u6210\u65f6\u95f4", "align": "center" },
+        { "name": "durationMs", "label": "\u5206\u53d1\u8017\u65f6(ms)", "align": "center" },
+        { "name": "sourceImage", "label": "\u4e2d\u5fc3\u4e91\u955c\u50cf", "align": "center", "breakpoint": "*" },
+        { "name": "targetImage", "label": "\u8fb9\u7f18\u4e91\u955c\u50cf", "align": "center", "breakpoint": "*" },
+        { "name": "message", "label": "\u8bf4\u660e", "align": "center", "breakpoint": "*" }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "\u6682\u65e0\u6309\u9700\u5206\u53d1\u8bb0\u5f55\uff0c\u542f\u52a8\u8fb9\u7f18\u4e91\u6d41\u4efb\u52a1\u540e\u4f1a\u81ea\u52a8\u4ea7\u751f\u8bb0\u5f55",
+      "tableClassName": "table-db table-striped"
+    }
+  ]
+}

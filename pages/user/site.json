@@ -25,6 +25,12 @@
                 "schemaApi": "get:/pages/public/flow/flow-template-list.json?v=20260601-flow11"
               },
               {
+                "label": "\u6d41\u4efb\u52a1\u6a21\u677f\u7ed3\u6784",
+                "url": "/flow/template/view",
+                "schemaApi": "get:/pages/public/flow/flow-template-view.json?v=20260623-view1",
+                "hidden": true
+              },
+              {
                 "label": "\u521b\u5efa\u6d41\u4efb\u52a1",
                 "url": "/flow/task/create",
                 "schemaApi": "get:/pages/public/flow/flow-task-create.json?v=20260601-flow8"
@@ -117,9 +123,15 @@
             "className": "child1"
           },
           {
-            "label": "\u5e94\u7528\u5206\u53d1\u8bb0\u5f55",
-            "url": "/distribution/records",
-            "schemaApi": "get:/pages/public/distribution/application-distribution-records.json?v=20260607-dist1",
+            "label": "\u5e94\u7528\u8fd0\u884c\u72b6\u6001",
+            "url": "/application/runtime",
+            "schemaApi": "get:/pages/public/distribution/application-distribution-records.json?v=20260622-dist2",
+            "className": "child1"
+          },
+          {
+            "label": "\u5e94\u7528\u5e93\u5b58",
+            "url": "/application/inventory",
+            "schemaApi": "get:/pages/public/distribution/application-inventory.json?v=20260622-inventory1",
             "className": "child1"
           },
           {
@@ -216,7 +228,14 @@
       },
       {
         "label": "\u591a\u4e91\u534f\u4f5c",
-        "children": []
+        "children": [
+          {
+            "label": "\u6309\u9700\u5206\u53d1\u8bb0\u5f55",
+            "url": "/multi-cloud/on-demand-distribution",
+            "schemaApi": "get:/pages/public/distribution/on-demand-distribution-records.json?v=20260623-ondemand1",
+            "className": "child1"
+          }
+        ]
       },
       {
         "label": "\u8d26\u53f7\u7ba1\u7406",

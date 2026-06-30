@@ -54,7 +54,7 @@
           "label": "Status",
           "labelClassName": "font-bold",
           "align": "center",
-          "classNameExpr": "<%= data.status === '可部署' ? 'text-info' : 'text-danger' %>"
+          "classNameExpr": "<%= data.status === '可部署' ? 'text-info' : (data.status === '创建中' ? 'text-warning' : 'text-danger') %>"
         },
         {
           "name": "createTime",
@@ -84,7 +84,6 @@
                   "type": "button",
                   "label": "Delete",
                   "level": "danger",
-                  "visibleOn": "${status === '可部署'}",
                   "actionType": "ajax",
                   "confirmText": "This will delete image ${image}. Continue?",
                   "api": {

@@ -14,7 +14,7 @@
       "initApi": {
         "method": "get",
         "url": "${API_HOST}/datastream/flow/template/detail?templateCode=fedavg-flow",
-        "adaptor": "function rowsOf(data){ var defaults = data.defaultParams || {}; var map = {}; function put(key, label, value, valueType, required, usedBy, description){ if(!key) return; if(!map[key]) map[key] = { key: key, label: label || key, value: value, valueType: valueType || 'STRING', required: !!required, usedBy: [], description: description || '' }; map[key].usedBy.push(usedBy || 'template'); } (data.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(p){ if(!p.key) return; put(p.key, p.label || p.key, defaults[p.key] !== undefined ? defaults[p.key] : p.defaultValue, p.valueType || 'STRING', !!p.required, node.name || node.id, p.description || ''); }); }); (data.loops || []).forEach(function(loop){ if(loop.countParam) put(loop.countParam, loop.countParam, defaults[loop.countParam], 'NUMBER', true, loop.id || 'loop', 'loop count'); }); return Object.keys(map).map(function(k){ var row = map[k]; if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2); row.usedBy = row.usedBy.join(', '); return row; }); } var data = payload.data || {}; var defaults = data.defaultParams || {}; var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, modelType: data.modelType, taskName: (defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(data), splitItems: splitItems } };"
+        "adaptor": "function rowsOf(data){\n  var defaults = data.defaultParams || {};\n  var map = {};\n  function numberConfig(param, value){\n    if((param.valueType || 'STRING').toUpperCase() !== 'NUMBER') return {};\n    var precision = param.precision;\n    if(precision === undefined || precision === null || precision === ''){\n      var text = String(value === undefined || value === null ? '' : value).toLowerCase();\n      if(text.indexOf('e-') > -1) precision = Number(text.split('e-')[1]) || 0;\n      else precision = text.indexOf('.') > -1 ? text.split('.')[1].length : 0;\n    }\n    precision = Math.max(0, Number(precision) || 0);\n    var step = param.step;\n    if(step === undefined || step === null || step === '') step = precision > 0 ? Math.pow(10, -precision) : 1;\n    return { precision: precision, step: Number(step) };\n  }\n  function put(param, usedBy){\n    if(!param || !param.key) return;\n    var key = param.key;\n    var resolvedValue = defaults[key] !== undefined ? defaults[key] : param.defaultValue;\n    var numeric = numberConfig(param, resolvedValue);\n    if(!map[key]) map[key] = {\n      key: key,\n      label: param.label || key,\n      value: resolvedValue,\n      valueType: param.valueType || 'STRING',\n      controlType: param.controlType || 'INPUT',\n      options: Array.isArray(param.options) ? param.options : [],\n      step: numeric.step,\n      precision: numeric.precision,\n      required: !!param.required,\n      usedBy: [],\n      description: param.description || ''\n    };\n    if(usedBy && map[key].usedBy.indexOf(usedBy) < 0) map[key].usedBy.push(usedBy);\n  }\n  (data.runtimeParams || []).forEach(function(param){ put(param, 'template'); });\n  (data.nodes || []).forEach(function(node){\n    (node.paramBindings || []).forEach(function(binding){\n      put(binding, node.name || node.id);\n    });\n  });\n  (data.loops || []).forEach(function(loop){\n    if(loop.countParam) put({ key: loop.countParam, label: loop.countParam, valueType: 'NUMBER', controlType: 'INPUT', required: true, description: 'loop count' }, loop.id || 'loop');\n  });\n  return Object.keys(map).map(function(key){\n    var row = map[key];\n    if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2);\n    row.usedBy = row.usedBy.join(', ');\n    return row;\n  });\n} var data = payload.data || {}; var defaults = data.defaultParams || {}; var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, modelType: data.modelType, taskName: (defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(data), splitItems: splitItems } };"
       },
       "api": {
         "method": "post",
@@ -181,7 +181,7 @@
                   "source": {
                     "method": "get",
                     "url": "${API_HOST}/datastream/flow/template/list",
-                    "adaptor": "function rowsOf(data){ var defaults = data.defaultParams || {}; var map = {}; function put(key, label, value, valueType, required, usedBy, description){ if(!key) return; if(!map[key]) map[key] = { key: key, label: label || key, value: value, valueType: valueType || 'STRING', required: !!required, usedBy: [], description: description || '' }; map[key].usedBy.push(usedBy || 'template'); } (data.nodes || []).forEach(function(node){ (node.paramBindings || []).forEach(function(p){ if(!p.key) return; put(p.key, p.label || p.key, defaults[p.key] !== undefined ? defaults[p.key] : p.defaultValue, p.valueType || 'STRING', !!p.required, node.name || node.id, p.description || ''); }); }); (data.loops || []).forEach(function(loop){ if(loop.countParam) put(loop.countParam, loop.countParam, defaults[loop.countParam], 'NUMBER', true, loop.id || 'loop', 'loop count'); }); return Object.keys(map).map(function(k){ var row = map[k]; if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2); row.usedBy = row.usedBy.join(', '); return row; }); } return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, modelType: item.modelType, taskName: (defaults.taskName || (item.templateCode + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(item), splitItems: splitItems }; }) } };"
+                    "adaptor": "function rowsOf(data){\n  var defaults = data.defaultParams || {};\n  var map = {};\n  function numberConfig(param, value){\n    if((param.valueType || 'STRING').toUpperCase() !== 'NUMBER') return {};\n    var precision = param.precision;\n    if(precision === undefined || precision === null || precision === ''){\n      var text = String(value === undefined || value === null ? '' : value).toLowerCase();\n      if(text.indexOf('e-') > -1) precision = Number(text.split('e-')[1]) || 0;\n      else precision = text.indexOf('.') > -1 ? text.split('.')[1].length : 0;\n    }\n    precision = Math.max(0, Number(precision) || 0);\n    var step = param.step;\n    if(step === undefined || step === null || step === '') step = precision > 0 ? Math.pow(10, -precision) : 1;\n    return { precision: precision, step: Number(step) };\n  }\n  function put(param, usedBy){\n    if(!param || !param.key) return;\n    var key = param.key;\n    var resolvedValue = defaults[key] !== undefined ? defaults[key] : param.defaultValue;\n    var numeric = numberConfig(param, resolvedValue);\n    if(!map[key]) map[key] = {\n      key: key,\n      label: param.label || key,\n      value: resolvedValue,\n      valueType: param.valueType || 'STRING',\n      controlType: param.controlType || 'INPUT',\n      options: Array.isArray(param.options) ? param.options : [],\n      step: numeric.step,\n      precision: numeric.precision,\n      required: !!param.required,\n      usedBy: [],\n      description: param.description || ''\n    };\n    if(usedBy && map[key].usedBy.indexOf(usedBy) < 0) map[key].usedBy.push(usedBy);\n  }\n  (data.runtimeParams || []).forEach(function(param){ put(param, 'template'); });\n  (data.nodes || []).forEach(function(node){\n    (node.paramBindings || []).forEach(function(binding){\n      put(binding, node.name || node.id);\n    });\n  });\n  (data.loops || []).forEach(function(loop){\n    if(loop.countParam) put({ key: loop.countParam, label: loop.countParam, valueType: 'NUMBER', controlType: 'INPUT', required: true, description: 'loop count' }, loop.id || 'loop');\n  });\n  return Object.keys(map).map(function(key){\n    var row = map[key];\n    if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2);\n    row.usedBy = row.usedBy.join(', ');\n    return row;\n  });\n} return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, modelType: item.modelType, taskName: (defaults.taskName || (item.templateCode + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(item), splitItems: splitItems }; }) } };"
                   },
                   "autoFill": {
                     "templateName": "${templateName}",
@@ -220,82 +220,73 @@
                   "required": true
                 },
                 {
-                  "type": "input-table",
+                  "type": "combo",
                   "name": "paramRows",
                   "label": "本次运行参数",
                   "addable": false,
                   "removable": false,
-                  "columns": [
+                  "multiple": true,
+                  "draggable": false,
+                  "multiLine": true,
+                  "items": [
                     {
-                      "name": "label",
-                      "label": "参数",
-                      "type": "input-text",
-                      "disabled": true
-                    },
-                    {
-                      "name": "value",
-                      "label": "值",
-                      "type": "select",
-                      "visibleOn": "this.key === 'DATASET'",
-                      "options": [
+                      "type": "grid",
+                      "className": "m-b-sm",
+                      "columns": [
                         {
-                          "label": "MNIST",
-                          "value": "mnist"
+                          "md": 4,
+                          "body": {
+                            "type": "static",
+                            "name": "label",
+                            "label": false
+                          }
                         },
                         {
-                          "label": "CIFAR10",
-                          "value": "cifar10"
+                          "md": 8,
+                          "body": [
+                            {
+                              "type": "select",
+                              "name": "value",
+                              "label": false,
+                              "visibleOn": "this.controlType === 'SELECT'",
+                              "source": "${options}",
+                              "requiredOn": "this.required",
+                              "clearable": false
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "value",
+                              "label": false,
+                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType === 'NUMBER'",
+                              "requiredOn": "this.required",
+                              "step": "${step}",
+                              "precision": "${precision}"
+                            },
+                            {
+                              "type": "switch",
+                              "name": "value",
+                              "label": false,
+                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType === 'BOOLEAN'"
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "value",
+                              "label": false,
+                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType === 'JSON'",
+                              "minRows": 2,
+                              "maxRows": 5,
+                              "requiredOn": "this.required"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "value",
+                              "label": false,
+                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType !== 'NUMBER' && this.valueType !== 'BOOLEAN' && this.valueType !== 'JSON'",
+                              "requiredOn": "this.required"
+                            }
+                          ]
                         }
                       ]
-                    },
-                    {
-                      "name": "value",
-                      "label": "值",
-                      "type": "select",
-                      "visibleOn": "this.key === 'MODEL'",
-                      "options": [
-                        {
-                          "label": "MLP",
-                          "value": "mlp"
-                        },
-                        {
-                          "label": "CNN",
-                          "value": "cnn"
-                        },
-                        {
-                          "label": "Small VGG",
-                          "value": "small-vgg"
-                        }
-                      ]
-                    },
-                    {
-                      "name": "value",
-                      "label": "值",
-                      "type": "textarea",
-                      "visibleOn": "this.key !== 'DATASET' && this.key !== 'MODEL'",
-                      "minRows": 1,
-                      "maxRows": 6
-                    },
-                    {
-                      "name": "valueType",
-                      "label": "类型",
-                      "type": "input-text",
-                      "disabled": true,
-                      "width": 80
-                    },
-                    {
-                      "name": "usedBy",
-                      "label": "使用位置",
-                      "type": "textarea",
-                      "disabled": true,
-                      "minRows": 1,
-                      "maxRows": 3
-                    },
-                    {
-                      "name": "description",
-                      "label": "说明",
-                      "type": "input-text",
-                      "disabled": true
                     }
                   ]
                 }

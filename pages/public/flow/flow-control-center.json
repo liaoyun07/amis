@@ -61,6 +61,11 @@
           "align": "center"
         },
         {
+          "name": "totalDurationMs",
+          "label": "总耗时(ms)",
+          "align": "center"
+        },
+        {
           "type": "operation",
           "label": "操作",
           "align": "center",
@@ -85,24 +90,45 @@
                       "type": "grid",
                       "columns": [
                         {
-                          "md": 3,
+                          "md": 2,
                           "body": {
                             "type": "tpl",
                             "tpl": "<div class='b-a p-3'><div class='text-muted'>状态</div><h3>${status|default:-}</h3></div>"
                           }
                         },
                         {
-                          "md": 3,
+                          "md": 2,
                           "body": {
                             "type": "tpl",
                             "tpl": "<div class='b-a p-3'><div class='text-muted'>Workflow</div><h3>${workflowName|default:-}</h3></div>"
                           }
                         },
                         {
-                          "md": 3,
+                          "md": 2,
                           "body": {
                             "type": "tpl",
                             "tpl": "<div class='b-a p-3'><div class='text-muted'>节点数</div><h3>${nodes.length || 0}</h3></div>"
+                          }
+                        },
+                        {
+                          "md": 2,
+                          "body": {
+                            "type": "tpl",
+                            "tpl": "<div class='b-a p-3'><div class='text-muted'>等待耗时</div><h3>${waitingDurationMs|default:0} ms</h3></div>"
+                          }
+                        },
+                        {
+                          "md": 2,
+                          "body": {
+                            "type": "tpl",
+                            "tpl": "<div class='b-a p-3'><div class='text-muted'>执行耗时</div><h3>${executionDurationMs|default:0} ms</h3></div>"
+                          }
+                        },
+                        {
+                          "md": 2,
+                          "body": {
+                            "type": "tpl",
+                            "tpl": "<div class='b-a p-3'><div class='text-muted'>任务总耗时</div><h3>${totalDurationMs|default:0} ms</h3></div>"
                           }
                         }
                       ]
@@ -154,6 +180,22 @@
                           "label": "结束时间"
                         },
                         {
+                          "name": "waitingDurationMs",
+                          "label": "等待耗时(ms)"
+                        },
+                        {
+                          "name": "executionDurationMs",
+                          "label": "执行耗时(ms)"
+                        },
+                        {
+                          "name": "totalDurationMs",
+                          "label": "总耗时(ms)"
+                        },
+                        {
+                          "name": "executionCount",
+                          "label": "执行次数"
+                        },
+                        {
                           "type": "operation",
                           "label": "操作",
                           "buttons": [
@@ -201,7 +243,7 @@
                   "api": {
                     "method": "get",
                     "url": "${API_HOST}/datastream/flow/task/result?taskName=${taskName}",
-                    "adaptor": "const data = payload.data || {};\nconst rows = data.metricRows || [];\nconst labels = rows.map(item => `Round ${item.round}`);\ndata.lossChart = { tooltip: { trigger: 'axis' }, grid: { left: 56, right: 24, bottom: 36, top: 36 }, xAxis: { type: 'category', boundaryGap: false, data: labels }, yAxis: { type: 'value', name: 'Loss', scale: true }, series: [{ name: 'Average Loss', type: 'line', smooth: true, symbolSize: 7, data: rows.map(item => item.avgLoss) }] };\ndata.accuracyChart = { tooltip: { trigger: 'axis' }, grid: { left: 56, right: 24, bottom: 36, top: 36 }, xAxis: { type: 'category', boundaryGap: false, data: labels }, yAxis: { type: 'value', name: 'Accuracy', min: 0, max: 1 }, series: [{ name: 'Average Accuracy', type: 'line', smooth: true, symbolSize: 7, data: rows.map(item => item.avgAccuracy) }] };\ndata.result = JSON.stringify(data, null, 2);\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data };"
+                    "adaptor": "const data = payload.data || {};\nconst rows = data.metricRows || [];\nconst labels = rows.map(item => `Round ${item.round}`);\ndata.lossChart = { tooltip: { trigger: 'axis' }, grid: { left: 56, right: 24, bottom: 36, top: 36 }, xAxis: { type: 'category', boundaryGap: false, data: labels }, yAxis: { type: 'value', name: 'Loss', scale: true }, series: [{ name: 'Average Loss', type: 'line', smooth: true, symbolSize: 7, data: rows.map(item => item.avgLoss) }] };\ndata.accuracyChart = { tooltip: { trigger: 'axis' }, grid: { left: 56, right: 24, bottom: 36, top: 36 }, xAxis: { type: 'category', boundaryGap: false, data: labels }, yAxis: { type: 'value', name: 'Accuracy', min: 0, max: 1 }, series: [{ name: 'Average Accuracy', type: 'line', smooth: true, symbolSize: 7, data: rows.map(item => item.avgAccuracy) }] };\nconst summary = { status: data.status, message: data.message, plannedRounds: data.plannedRounds, completedRounds: data.completedRounds, currentRound: data.currentRound, finalModelPath: data.finalModelPath, finalModelObject: data.finalModelObject || null, artifactPrefix: data.artifactPrefix, artifactObjects: data.artifactObjects || [], metricRows: data.metricRows || [], artifactListError: data.artifactListError || null, finalModelError: data.finalModelError || null };\ndata.result = JSON.stringify(summary, null, 2);\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data };"
                   },
                   "body": [
                     {

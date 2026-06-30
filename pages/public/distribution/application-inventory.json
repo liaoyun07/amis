@@ -1,11 +1,11 @@
 {
   "type": "page",
-  "name": "application-runtime-status",
-  "title": "\u5e94\u7528\u8fd0\u884c\u72b6\u6001",
+  "name": "application-inventory",
+  "title": "\u5e94\u7528\u5e93\u5b58",
   "body": [
     {
       "type": "crud",
-      "name": "application-runtime-list",
+      "name": "application-inventory-list",
       "data": {
         "clusterCode": "cloud-main"
       },
@@ -35,7 +35,7 @@
         { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
       ],
       "api": {
-        "url": "${API_HOST}/distribution/records",
+        "url": "${API_HOST}/distribution/inventory",
         "method": "get",
         "data": {
           "clusterCode": "${clusterCode}"
@@ -45,7 +45,7 @@
         { "name": "appName", "label": "\u5e94\u7528", "align": "center" },
         { "name": "image", "label": "\u955c\u50cf", "align": "center" },
         { "name": "version", "label": "\u7248\u672c", "align": "center" },
-        { "name": "targetCluster", "label": "\u76ee\u6807\u96c6\u7fa4", "align": "center" },
+        { "name": "clusterCode", "label": "\u5b58\u50a8\u4f4d\u7f6e", "align": "center" },
         {
           "name": "clusterRole",
           "label": "\u89d2\u8272",
@@ -58,28 +58,25 @@
           },
           "align": "center"
         },
-        { "name": "namespace", "label": "Namespace", "align": "center" },
-        { "name": "workloadType", "label": "\u8d1f\u8f7d\u7c7b\u578b", "align": "center" },
-        { "name": "workloadName", "label": "\u8d1f\u8f7d", "align": "center" },
+        { "name": "repository", "label": "\u4ed3\u5e93", "align": "center" },
+        { "name": "digest", "label": "\u955c\u50cf\u6458\u8981", "align": "center", "breakpoint": "*" },
+        { "name": "storageType", "label": "\u5b58\u50a8\u7c7b\u578b", "align": "center" },
         {
           "name": "status",
           "label": "\u72b6\u6001",
           "type": "mapping",
           "map": {
-            "RUNNING": "<span class='label label-success'>RUNNING</span>",
-            "DEPLOYING": "<span class='label label-warning'>DEPLOYING</span>",
-            "UNKNOWN": "<span class='label label-default'>UNKNOWN</span>",
+            "READY": "<span class='label label-success'>READY</span>",
+            "DISTRIBUTING": "<span class='label label-warning'>DISTRIBUTING</span>",
             "*": "<span class='label label-default'>${status}</span>"
           },
           "align": "center"
         },
-        { "name": "replicas", "label": "\u526f\u672c", "align": "center" },
-        { "name": "readyReplicas", "label": "\u5c31\u7eea", "align": "center" },
-        { "name": "creationTime", "label": "\u5206\u53d1\u65f6\u95f4", "align": "center" }
+        { "name": "storedAt", "label": "\u5165\u5e93\u65f6\u95f4", "align": "center" }
       ],
       "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "\u6682\u65e0\u6570\u636e",
+      "placeholder": "\u5f53\u524d\u4e91\u73af\u5883\u6682\u65e0\u5e94\u7528\u5e93\u5b58",
       "tableClassName": "table-db table-striped"
     }
   ]

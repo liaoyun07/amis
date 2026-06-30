@@ -189,6 +189,11 @@
               "clusterCode": "edge-b",
               "namespace": "fedavg-demo",
               "clientCount": 1
+            },
+            {
+              "clusterCode": "edge-c",
+              "namespace": "fedavg-demo",
+              "clientCount": 1
             }
           ],
           "columns": [
@@ -205,6 +210,10 @@
                 {
                   "label": "edge-b",
                   "value": "edge-b"
+                },
+                {
+                  "label": "edge-c",
+                  "value": "edge-c"
                 }
               ]
             },
