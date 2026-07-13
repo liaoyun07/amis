@@ -1,0 +1,184 @@
+{
+  "type": "page",
+  "name": "edge-data-policy",
+  "title": "边缘端数据策略",
+  "body": [
+    {
+      "type": "crud",
+      "name": "edge-data-policy-list",
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/edge-data-policy/list",
+        "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: payload.data || []}};"
+      },
+      "headerToolbar": [
+        {
+          "type": "button",
+          "label": "新增策略",
+          "level": "primary",
+          "actionType": "dialog",
+          "dialog": {
+            "title": "边缘端数据策略",
+            "size": "md",
+            "body": {
+              "type": "form",
+              "api": {
+                "method": "post",
+                "url": "${API_HOST}/datastream/edge-data-policy/save",
+                "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message};"
+              },
+              "body": [
+                { "type": "input-text", "name": "policyName", "label": "策略名称", "required": true },
+                {
+                  "type": "select",
+                  "name": "firstDataType",
+                  "label": "第一数据类型",
+                  "required": true,
+                  "value": "timeseries",
+                  "options": [
+                    { "label": "通用时序数据", "value": "timeseries" },
+                    { "label": "振动数据", "value": "vibration" },
+                    { "label": "温度数据", "value": "temperature" },
+                    { "label": "PLC 状态数据", "value": "plc-status" }
+                  ]
+                },
+                {
+                  "type": "select",
+                  "name": "processorImage",
+                  "label": "处理应用",
+                  "required": true,
+                  "options": [
+                    { "label": "特征提取 edge-preprocess", "value": "edge-preprocess" },
+                    { "label": "异常检测 edge-anomaly", "value": "edge-anomaly" }
+                  ]
+                },
+                {
+                  "type": "select",
+                  "name": "secondDataType",
+                  "label": "第二数据类型",
+                  "required": true,
+                  "options": [
+                    { "label": "特征数据", "value": "feature-data" },
+                    { "label": "异常报告", "value": "anomaly-report" }
+                  ]
+                },
+                {
+                  "type": "select",
+                  "name": "secondDataLocation",
+                  "label": "第二数据去向",
+                  "required": true,
+                  "value": "local",
+                  "options": [
+                    { "label": "保存到边缘云", "value": "local" },
+                    { "label": "上传至中心云", "value": "center" },
+                    { "label": "下发终端", "value": "terminal" }
+                  ]
+                },
+                { "type": "switch", "name": "enabled", "label": "启用", "value": true }
+              ]
+            }
+          }
+        },
+        {
+          "type": "button",
+          "label": "检测触发策略",
+          "level": "success",
+          "actionType": "ajax",
+          "api": {
+            "method": "post",
+            "url": "${API_HOST}/datastream/edge-data-policy/detect",
+            "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: (payload.data && payload.data.message) || payload.message};"
+          },
+          "reload": "edge-data-trigger-list"
+        },
+        { "type": "reload", "label": "刷新", "level": "primary" }
+      ],
+      "columns": [
+        { "name": "policyName", "label": "策略名称" },
+        {
+          "name": "firstDataType",
+          "label": "第一数据类型",
+          "type": "mapping",
+          "map": {
+            "timeseries": "通用时序数据",
+            "vibration": "振动数据",
+            "temperature": "温度数据",
+            "plc-status": "PLC 状态数据",
+            "*": "${firstDataType}"
+          }
+        },
+        { "name": "processorImage", "label": "处理应用" },
+        {
+          "name": "secondDataType",
+          "label": "第二数据类型",
+          "type": "mapping",
+          "map": {
+            "feature-data": "特征数据",
+            "anomaly-report": "异常报告",
+            "*": "${secondDataType}"
+          }
+        },
+        {
+          "name": "secondDataLocation",
+          "label": "第二数据去向",
+          "type": "mapping",
+          "map": {
+            "local": "保存到边缘云",
+            "center": "上传至中心云",
+            "terminal": "下发终端",
+            "*": "${secondDataLocation}"
+          }
+        },
+        { "name": "enabled", "label": "启用", "type": "status" },
+        { "name": "updatedAt", "label": "更新时间" },
+        {
+          "type": "operation",
+          "label": "操作",
+          "buttons": [
+            {
+              "type": "button",
+              "label": "删除",
+              "level": "link",
+              "className": "text-danger",
+              "actionType": "ajax",
+              "confirmText": "确认删除策略 ${policyName} ?",
+              "api": {
+                "method": "get",
+                "url": "${API_HOST}/datastream/edge-data-policy/delete?id=${id}",
+                "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message};"
+              },
+              "reload": "edge-data-policy-list"
+            }
+          ]
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto"
+    },
+    { "type": "divider" },
+    {
+      "type": "crud",
+      "name": "edge-data-trigger-list",
+      "title": "策略触发记录",
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/edge-data-policy/trigger-records",
+        "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: payload.data || []}};"
+      },
+      "headerToolbar": [
+        { "type": "reload", "label": "刷新", "level": "primary" }
+      ],
+      "columns": [
+        { "name": "policyName", "label": "策略名称" },
+        { "name": "firstDataPath", "label": "第一数据路径" },
+        { "name": "triggeredTaskName", "label": "触发流任务" },
+        { "name": "status", "label": "状态" },
+        { "name": "message", "label": "说明" },
+        { "name": "createdAt", "label": "触发时间" }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "暂无策略触发记录"
+    }
+  ]
+}

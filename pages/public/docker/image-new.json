@@ -14,12 +14,12 @@
   "body": [
     {
       "type": "form",
-      "title": "表单提交",
+      "title": "镜像上传",
       "reload": "result?log=${response}",
       "api": {
-        "url" : "${API_HOST}/image/build",
+        "url": "${API_HOST}/image/build",
         "messages": {
-          "success": "镜像创建请求已提交，请至镜像列表查询!"
+          "success": "镜像创建请求已提交，请至镜像列表查询。"
         },
         "method": "post",
         "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
@@ -36,6 +36,7 @@
           "type": "input-text",
           "name": "imageName",
           "label": "镜像名称",
+          "required": true,
           "size": "sm"
         },
         {
@@ -46,6 +47,42 @@
           "multiple": true,
           "drag": true,
           "asBlob": true
+        },
+        {
+          "type": "select",
+          "name": "dispatchMode",
+          "label": "分发方式",
+          "value": "on_demand",
+          "options": [
+            { "label": "按需分发", "value": "on_demand" },
+            { "label": "启动前预热", "value": "preload" },
+            { "label": "广播到全部边缘", "value": "broadcast" }
+          ]
+        },
+        {
+          "type": "select",
+          "name": "targetScope",
+          "label": "目标范围",
+          "value": "participating",
+          "options": [
+            { "label": "本次参与边缘", "value": "participating" },
+            { "label": "全部边缘", "value": "all_edges" },
+            { "label": "指定边缘", "value": "explicit" }
+          ]
+        },
+        {
+          "type": "input-text",
+          "name": "targetClusters",
+          "label": "指定边缘",
+          "placeholder": "edge-a,edge-b",
+          "visibleOn": "${targetScope === 'explicit'}"
+        },
+        {
+          "type": "textarea",
+          "name": "triggerCondition",
+          "label": "触发说明",
+          "minRows": 2,
+          "placeholder": "例如：任务启动前预热到参与边缘"
         }
       ]
     }

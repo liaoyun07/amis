@@ -1,0 +1,62 @@
+{
+  "type": "page",
+  "name": "data-records",
+  "title": "数据流转记录",
+  "body": [
+    {
+      "type": "crud",
+      "name": "data-flow-record-list",
+      "filter": {
+        "title": "",
+        "mode": "horizontal",
+        "wrapWithPanel": false,
+        "body": [
+          {
+            "type": "input-text",
+            "name": "taskName",
+            "label": "关键词",
+            "placeholder": "流任务 / 策略 / 终端",
+            "clearable": true
+          }
+        ]
+      },
+      "headerToolbar": [
+        { "type": "reload", "label": "刷新", "level": "primary" },
+        { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
+      ],
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/data-record/flow-list",
+        "data": { "taskName": "${taskName}" },
+        "adaptor": "var items = payload.data || [];\nfunction typeText(v) { var m = {'timeseries':'通用时序数据','vibration':'振动数据','temperature':'温度数据','plc-status':'PLC 状态数据','feature-data':'特征数据','anomaly-report':'异常报告','dataset':'数据集'}; return m[v] || v || '-'; }\nfunction targetText(v) { if (v === 'local') return '保存到边缘云'; if (v === 'center') return '上传至中心云'; if (v === 'terminal') return '下发终端'; return v || '-'; }\nfunction locationText(v) { if (!v) return '-'; if (v.indexOf('edge:') === 0) return '边缘云 ' + v.substring(5); if (v === 'center') return '中心云'; if (v === 'terminal') return '终端'; return v; }\nfunction statusText(v) { if (!v) return '-'; if (v === '待处理' || v.indexOf('寰') === 0) return '待处理'; if (v === '处理中' || v.indexOf('澶勭悊涓') === 0) return '处理中'; if (v === '处理完成' || v.indexOf('澶勭悊瀹') === 0) return '处理完成'; if (v === '处理失败' || v.indexOf('澶勭悊澶') === 0) return '处理失败'; return v; }\nitems = items.map(function(item) { return {...item, executionLocationText: locationText(item.executionLocation), inputDataTypeText: typeText(item.inputDataType), outputDataTypeText: typeText(item.outputDataType), outputTargetText: targetText(item.outputTarget), processStatusText: statusText(item.processStatus)}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
+      },
+      "columns": [
+        { "name": "createdAt", "label": "登记时间" },
+        { "name": "sourceTerminal", "label": "来源终端" },
+        { "name": "clusterCode", "label": "所属边缘云" },
+        { "name": "executionLocationText", "label": "执行位置" },
+        { "name": "inputDataTypeText", "label": "输入数据类型" },
+        { "name": "policyName", "label": "触发策略" },
+        { "name": "processorImage", "label": "处理应用" },
+        { "name": "flowTaskName", "label": "触发流任务" },
+        { "name": "outputDataTypeText", "label": "输出数据类型" },
+        { "name": "outputTargetText", "label": "去向" },
+        {
+          "name": "processStatusText",
+          "label": "处理状态",
+          "type": "mapping",
+          "map": {
+            "待处理": "<span class='label label-default'>待处理</span>",
+            "处理中": "<span class='label label-info'>处理中</span>",
+            "处理完成": "<span class='label label-success'>处理完成</span>",
+            "处理失败": "<span class='label label-danger'>处理失败</span>",
+            "*": "${processStatusText}"
+          }
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "暂无数据流转记录"
+    }
+  ]
+}
