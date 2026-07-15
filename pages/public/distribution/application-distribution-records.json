@@ -75,6 +75,16 @@
         },
         { "name": "replicas", "label": "\u526f\u672c", "align": "center" },
         { "name": "readyReplicas", "label": "\u5c31\u7eea", "align": "center" },
+        {
+          "name": "deploymentDurationSeconds",
+          "label": "\u90e8\u7f72\u8017\u65f6(s)",
+          "type": "mapping",
+          "map": {
+            "DEPLOYING": "\u90e8\u7f72\u4e2d",
+            "*": "${deploymentDurationSeconds}"
+          },
+          "align": "center"
+        },
         { "name": "creationTime", "label": "\u5206\u53d1\u65f6\u95f4", "align": "center" }
       ],
       "affixHeader": true,

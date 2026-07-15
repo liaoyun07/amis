@@ -1,83 +1,245 @@
 {
   "type": "page",
-  "name": "application-inventory",
-  "title": "\u5e94\u7528\u5e93\u5b58",
+  "name": "application-image-repository",
+  "title": "应用与镜像仓库",
   "body": [
     {
-      "type": "crud",
-      "name": "application-inventory-list",
-      "data": {
-        "clusterCode": "cloud-main"
-      },
-      "filter": {
-        "title": "",
-        "mode": "horizontal",
-        "wrapWithPanel": false,
-        "submitText": "\u67e5\u770b",
-        "body": [
-          {
-            "type": "select",
-            "name": "clusterCode",
-            "label": "\u4e91\u73af\u5883",
-            "value": "cloud-main",
-            "clearable": false,
-            "searchable": false,
-            "submitOnChange": true,
-            "source": {
-              "method": "get",
-              "url": "${API_HOST}/cluster/options"
+      "type": "tabs",
+      "tabsMode": "line",
+      "tabs": [
+        {
+          "title": "中心镜像仓库",
+          "body": [
+            {
+              "type": "button",
+              "label": "创建镜像",
+              "icon": "fas fa-plus",
+              "size": "md",
+              "level": "primary",
+              "actionType": "link",
+              "link": "/images/new"
+            },
+            {
+              "type": "crud",
+              "name": "center-app-catalog-list",
+              "headerToolbar": [
+                {
+                  "type": "reload",
+                  "align": "left",
+                  "icon": "iconfont icon-refresh",
+                  "label": "刷新",
+                  "level": "primary"
+                },
+                {
+                  "type": "columns-toggler",
+                  "align": "right",
+                  "draggable": false,
+                  "icon": "fas fa-cog",
+                  "overlay": true,
+                  "footerBtnSize": "sm"
+                }
+              ],
+              "api": {
+                "url": "${API_HOST}/datastream/app-catalog/list",
+                "method": "get",
+                "adaptor": "var items = payload.data || [];\nfunction modeText(v){ if(v === 'on_demand') return '按需分发'; if(v === 'preload') return '启动前预分发'; if(v === 'broadcast') return '广播到全部边缘'; return v || '-'; }\nfunction scopeText(v){ if(v === 'participating') return '本次参与边缘'; if(v === 'all_edges') return '全部边缘'; if(v === 'explicit') return '指定边缘'; return v || '-'; }\nitems = items.map(function(item){ return {...item, dispatchModeText: modeText(item.dispatchMode), targetScopeText: scopeText(item.targetScope), centerImageText: item.centerImageReady ? '已存在' : '缺失', distributedEdgesText: item.distributedEdges || '-'}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
+              },
+              "columns": [
+                {
+                  "name": "appName",
+                  "label": "应用",
+                  "labelClassName": "font-bold",
+                  "align": "center"
+                },
+                {
+                  "name": "version",
+                  "label": "版本",
+                  "labelClassName": "font-bold",
+                  "align": "center"
+                },
+                {
+                  "name": "image",
+                  "label": "中心镜像",
+                  "labelClassName": "font-bold",
+                  "align": "center",
+                  "breakpoint": "*"
+                },
+                {
+                  "name": "centerImageText",
+                  "label": "镜像状态",
+                  "labelClassName": "font-bold",
+                  "type": "mapping",
+                  "map": {
+                    "已存在": "<span class='label label-success'>已存在</span>",
+                    "缺失": "<span class='label label-danger'>缺失</span>",
+                    "*": "${centerImageText}"
+                  },
+                  "align": "center"
+                },
+                {
+                  "name": "dispatchModeText",
+                  "label": "分发方式",
+                  "labelClassName": "font-bold",
+                  "align": "center"
+                },
+                {
+                  "name": "targetScopeText",
+                  "label": "目标范围",
+                  "labelClassName": "font-bold",
+                  "align": "center"
+                },
+                {
+                  "name": "distributedEdgesText",
+                  "label": "已分发边缘",
+                  "labelClassName": "font-bold",
+                  "align": "center"
+                },
+                {
+                  "name": "consistencyStatus",
+                  "label": "分发状态",
+                  "labelClassName": "font-bold",
+                  "type": "mapping",
+                  "map": {
+                    "已分发": "<span class='label label-success'>已分发</span>",
+                    "待分发": "<span class='label label-warning'>待分发</span>",
+                    "中心镜像缺失": "<span class='label label-danger'>中心镜像缺失</span>",
+                    "*": "${consistencyStatus}"
+                  },
+                  "align": "center"
+                },
+                {
+                  "name": "updatedAt",
+                  "label": "更新时间",
+                  "labelClassName": "font-bold",
+                  "align": "center"
+                }
+              ],
+              "affixHeader": true,
+              "columnsTogglable": "auto",
+              "placeholder": "暂无中心应用镜像",
+              "tableClassName": "table-db table-striped",
+              "headerClassName": "crud-table-header",
+              "footerClassName": "crud-table-footer",
+              "toolbarClassName": "crud-table-toolbar",
+              "combineNum": 1,
+              "bodyClassName": "panel-default"
             }
-          }
-        ]
-      },
-      "headerToolbar": [
-        { "type": "reload", "align": "left", "icon": "iconfont icon-refresh", "label": "\u5237\u65b0", "level": "primary" },
-        { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
-      ],
-      "api": {
-        "url": "${API_HOST}/distribution/inventory",
-        "method": "get",
-        "data": {
-          "clusterCode": "${clusterCode}"
+          ]
+        },
+        {
+          "title": "边缘应用库存",
+          "body": [
+            {
+              "type": "crud",
+              "name": "application-inventory-list",
+              "data": {
+                "clusterCode": "edge-a"
+              },
+              "filter": {
+                "title": "",
+                "mode": "horizontal",
+                "wrapWithPanel": false,
+                "submitText": "查看",
+                "body": [
+                  {
+                    "type": "select",
+                    "name": "clusterCode",
+                    "label": "边缘云",
+                    "value": "edge-a",
+                    "clearable": false,
+                    "searchable": false,
+                    "submitOnChange": true,
+                    "source": {
+                      "method": "get",
+                      "url": "${API_HOST}/datastream/flow/template/cluster/options?target=EDGE"
+                    }
+                  }
+                ]
+              },
+              "headerToolbar": [
+                {
+                  "type": "reload",
+                  "align": "left",
+                  "icon": "iconfont icon-refresh",
+                  "label": "刷新",
+                  "level": "primary"
+                },
+                {
+                  "type": "columns-toggler",
+                  "align": "right",
+                  "icon": "fas fa-cog",
+                  "overlay": true
+                }
+              ],
+              "api": {
+                "url": "${API_HOST}/distribution/inventory",
+                "method": "get",
+                "data": {
+                  "clusterCode": "${clusterCode}"
+                }
+              },
+              "columns": [
+                {
+                  "name": "appName",
+                  "label": "应用",
+                  "align": "center"
+                },
+                {
+                  "name": "image",
+                  "label": "镜像",
+                  "align": "center"
+                },
+                {
+                  "name": "version",
+                  "label": "版本",
+                  "align": "center"
+                },
+                {
+                  "name": "clusterCode",
+                  "label": "边缘云",
+                  "align": "center"
+                },
+                {
+                  "name": "repository",
+                  "label": "仓库",
+                  "align": "center"
+                },
+                {
+                  "name": "digest",
+                  "label": "镜像摘要",
+                  "align": "center",
+                  "breakpoint": "*"
+                },
+                {
+                  "name": "storageType",
+                  "label": "存储类型",
+                  "align": "center"
+                },
+                {
+                  "name": "status",
+                  "label": "状态",
+                  "type": "mapping",
+                  "map": {
+                    "READY": "<span class='label label-success'>可用</span>",
+                    "DISTRIBUTING": "<span class='label label-warning'>分发中</span>",
+                    "*": "<span class='label label-default'>${status}</span>"
+                  },
+                  "align": "center"
+                },
+                {
+                  "name": "storedAt",
+                  "label": "入库时间",
+                  "align": "center"
+                }
+              ],
+              "affixHeader": true,
+              "columnsTogglable": "auto",
+              "placeholder": "当前边缘云暂无应用库存",
+              "tableClassName": "table-db table-striped"
+            }
+          ]
         }
-      },
-      "columns": [
-        { "name": "appName", "label": "\u5e94\u7528", "align": "center" },
-        { "name": "image", "label": "\u955c\u50cf", "align": "center" },
-        { "name": "version", "label": "\u7248\u672c", "align": "center" },
-        { "name": "clusterCode", "label": "\u5b58\u50a8\u4f4d\u7f6e", "align": "center" },
-        {
-          "name": "clusterRole",
-          "label": "\u89d2\u8272",
-          "type": "mapping",
-          "map": {
-            "CLOUD": "\u4e2d\u5fc3\u4e91",
-            "EDGE": "\u8fb9\u7f18\u4e91",
-            "GENERAL": "\u901a\u7528\u96c6\u7fa4",
-            "*": "${clusterRole}"
-          },
-          "align": "center"
-        },
-        { "name": "repository", "label": "\u4ed3\u5e93", "align": "center" },
-        { "name": "digest", "label": "\u955c\u50cf\u6458\u8981", "align": "center", "breakpoint": "*" },
-        { "name": "storageType", "label": "\u5b58\u50a8\u7c7b\u578b", "align": "center" },
-        {
-          "name": "status",
-          "label": "\u72b6\u6001",
-          "type": "mapping",
-          "map": {
-            "READY": "<span class='label label-success'>READY</span>",
-            "DISTRIBUTING": "<span class='label label-warning'>DISTRIBUTING</span>",
-            "*": "<span class='label label-default'>${status}</span>"
-          },
-          "align": "center"
-        },
-        { "name": "storedAt", "label": "\u5165\u5e93\u65f6\u95f4", "align": "center" }
-      ],
-      "affixHeader": true,
-      "columnsTogglable": "auto",
-      "placeholder": "\u5f53\u524d\u4e91\u73af\u5883\u6682\u65e0\u5e94\u7528\u5e93\u5b58",
-      "tableClassName": "table-db table-striped"
+      ]
     }
   ]
 }

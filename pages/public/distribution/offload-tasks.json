@@ -1,0 +1,125 @@
+{
+  "type": "page",
+  "name": "offload-tasks",
+  "title": "智能任务卸载",
+  "body": [
+    {
+      "type": "alert",
+      "level": "info",
+      "showIcon": true,
+      "body": "终端发起计算任务请求后，卸载控制中心结合任务特征、终端资源、边缘云状态和中心云状态，输出任务执行去向，并记录卸载决策时延。"
+    },
+    {
+      "type": "crud",
+      "name": "offload-task-list",
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/offload/list",
+        "data": {
+          "keyword": "${keyword}"
+        },
+        "adaptor": "var items = payload.data || [];\nfunction targetText(v){ if(v === 'TERMINAL') return '终端'; if(v === 'EDGE') return '边缘云'; if(v === 'CLOUD') return '中心云'; return v || '-'; }\nfunction taskTypeText(v){ if(v === 'LOCAL_QUALITY_CHECK') return '轻量质检'; if(v === 'EDGE_INFERENCE') return '边缘推理'; if(v === 'CLOUD_BATCH_ANALYSIS') return '批量分析'; return v || '-'; }\nfunction statusText(v){ if(v === 'TERMINAL') return '终端本地执行'; if(v === 'EDGE') return '已卸载到边缘云'; if(v === 'CLOUD') return '已卸载到中心云'; return '已决策'; }\nitems = items.map(function(item){ var target = targetText(item.decisionTarget); return {...item, taskTypeText: taskTypeText(item.taskType), decisionTargetText: target, inputSizeText: (item.inputSizeMb || 0) + ' MB', deadlineText: (item.deadlineMs || '-') + ' ms', terminalLoadText: 'CPU ' + (item.terminalCpuLoad || 0) + '% / 内存 ' + (item.terminalMemoryLoad || 0) + '%', edgeContextText: '负载 ' + (item.edgeLoad || 0) + '% / 时延 ' + (item.edgeLatencyMs || 0) + ' ms', centerContextText: '负载 ' + (item.centerLoad || 0) + '% / 时延 ' + (item.centerLatencyMs || 0) + ' ms', decisionLatencyText: (item.decisionLatencyMs || '-') + ' ms', executeStatusText: statusText(item.decisionTarget)}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
+      },
+      "interval": 5000,
+      "silentPolling": true,
+      "filter": {
+        "title": "",
+        "mode": "horizontal",
+        "wrapWithPanel": false,
+        "submitText": "查询",
+        "body": [
+          {
+            "type": "input-text",
+            "name": "keyword",
+            "label": "关键词",
+            "placeholder": "终端、任务类型或卸载目标"
+          }
+        ]
+      },
+      "headerToolbar": [
+        {
+          "type": "reload",
+          "label": "刷新",
+          "level": "primary"
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "icon": "fas fa-cog",
+          "overlay": true
+        }
+      ],
+      "columns": [
+        {
+          "name": "createdAt",
+          "label": "请求时间",
+          "align": "center"
+        },
+        {
+          "name": "terminalCode",
+          "label": "终端",
+          "align": "center"
+        },
+        {
+          "name": "clusterCode",
+          "label": "所属边缘云",
+          "align": "center"
+        },
+        {
+          "name": "taskTypeText",
+          "label": "任务类型",
+          "align": "center"
+        },
+        {
+          "name": "inputSizeText",
+          "label": "输入数据量",
+          "align": "center"
+        },
+        {
+          "name": "deadlineText",
+          "label": "截止时延",
+          "align": "center"
+        },
+        {
+          "name": "terminalLoadText",
+          "label": "终端资源",
+          "align": "center"
+        },
+        {
+          "name": "edgeContextText",
+          "label": "边缘云状态",
+          "align": "center"
+        },
+        {
+          "name": "centerContextText",
+          "label": "中心云状态",
+          "align": "center"
+        },
+        {
+          "name": "decisionTargetText",
+          "label": "卸载去向",
+          "type": "mapping",
+          "map": {
+            "终端": "<span class='label label-info'>终端</span>",
+            "边缘云": "<span class='label label-success'>边缘云</span>",
+            "中心云": "<span class='label label-primary'>中心云</span>",
+            "*": "${decisionTargetText}"
+          },
+          "align": "center"
+        },
+        {
+          "name": "decisionLatencyText",
+          "label": "决策时延",
+          "align": "center"
+        },
+        {
+          "name": "executeStatusText",
+          "label": "处理状态",
+          "align": "center"
+        }
+      ],
+      "placeholder": "暂无卸载任务，启动任务卸载 agent 后会自动出现",
+      "tableClassName": "table-db table-striped"
+    }
+  ]
+}

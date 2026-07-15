@@ -9,7 +9,7 @@
       "api": {
         "method": "get",
         "url": "${API_HOST}/datastream/flow/task/list",
-        "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: payload.data || [] } };"
+        "adaptor": "var items = (payload.data || []).map(function(item) { return { ...item, dataProcessingRate: item.dataProcessingRate || '-', resourceOverhead: item.resourceOverhead || '-' }; });\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: items } };"
       },
       "headerToolbar": [
         {
@@ -63,6 +63,16 @@
         {
           "name": "totalDurationMs",
           "label": "总耗时(ms)",
+          "align": "center"
+        },
+        {
+          "name": "dataProcessingRate",
+          "label": "数据处理速率",
+          "align": "center"
+        },
+        {
+          "name": "resourceOverhead",
+          "label": "系统资源开销",
           "align": "center"
         },
         {

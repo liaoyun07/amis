@@ -5,8 +5,8 @@
     {
       "type": "button",
       "actionType": "link",
-      "link": "/image/list",
-      "label": "返回镜像列表",
+      "link": "/application/inventory",
+      "label": "返回应用与镜像仓库",
       "level": "primary"
     }
   ],
@@ -19,7 +19,7 @@
       "api": {
         "url": "${API_HOST}/image/build",
         "messages": {
-          "success": "镜像创建请求已提交，请至镜像列表查询。"
+          "success": "镜像创建请求已提交，请至应用与镜像仓库查询。"
         },
         "method": "post",
         "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"

@@ -14,8 +14,8 @@
     {
       "type": "button",
       "actionType": "link",
-      "link": "/image/list",
-      "label": "返回镜像列表",
+      "link": "/application/inventory",
+      "label": "返回应用与镜像仓库",
       "level": "primary",
       "size": "lg"
     }
