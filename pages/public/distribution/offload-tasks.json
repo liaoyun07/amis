@@ -1,14 +1,8 @@
 {
   "type": "page",
   "name": "offload-tasks",
-  "title": "智能任务卸载",
+  "title": "基于强化学习的云边端任务卸载",
   "body": [
-    {
-      "type": "alert",
-      "level": "info",
-      "showIcon": true,
-      "body": "终端发起计算任务请求后，卸载控制中心结合任务特征、终端资源、边缘云状态和中心云状态，输出任务执行去向，并记录卸载决策时延。"
-    },
     {
       "type": "crud",
       "name": "offload-task-list",
@@ -16,10 +10,14 @@
         "method": "get",
         "url": "${API_HOST}/datastream/offload/list",
         "data": {
-          "keyword": "${keyword}"
+          "keyword": "${keyword}",
+          "page": "${page}",
+          "perPage": "${perPage}"
         },
-        "adaptor": "var items = payload.data || [];\nfunction targetText(v){ if(v === 'TERMINAL') return '终端'; if(v === 'EDGE') return '边缘云'; if(v === 'CLOUD') return '中心云'; return v || '-'; }\nfunction taskTypeText(v){ if(v === 'LOCAL_QUALITY_CHECK') return '轻量质检'; if(v === 'EDGE_INFERENCE') return '边缘推理'; if(v === 'CLOUD_BATCH_ANALYSIS') return '批量分析'; return v || '-'; }\nfunction statusText(v){ if(v === 'TERMINAL') return '终端本地执行'; if(v === 'EDGE') return '已卸载到边缘云'; if(v === 'CLOUD') return '已卸载到中心云'; return '已决策'; }\nitems = items.map(function(item){ var target = targetText(item.decisionTarget); return {...item, taskTypeText: taskTypeText(item.taskType), decisionTargetText: target, inputSizeText: (item.inputSizeMb || 0) + ' MB', deadlineText: (item.deadlineMs || '-') + ' ms', terminalLoadText: 'CPU ' + (item.terminalCpuLoad || 0) + '% / 内存 ' + (item.terminalMemoryLoad || 0) + '%', edgeContextText: '负载 ' + (item.edgeLoad || 0) + '% / 时延 ' + (item.edgeLatencyMs || 0) + ' ms', centerContextText: '负载 ' + (item.centerLoad || 0) + '% / 时延 ' + (item.centerLatencyMs || 0) + ' ms', decisionLatencyText: (item.decisionLatencyMs || '-') + ' ms', executeStatusText: statusText(item.decisionTarget)}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
+        "adaptor": "var body = payload.data || {}; var items = Array.isArray(body) ? body : (body.items || []); var total = Array.isArray(body) ? items.length : (body.total || 0); function targetText(v) { if (v === 'TERMINAL') return '终端'; if (v === 'EDGE') return '边缘云'; if (v === 'CLOUD') return '中心云'; return v || '-'; } function taskTypeText(v) { if (v === 'LOCAL_QUALITY_CHECK') return '轻量质检'; if (v === 'EDGE_INFERENCE') return '边缘推理'; if (v === 'CLOUD_BATCH_ANALYSIS') return '批量分析'; return v || '-'; } function executionStatusText(v) { if (v === 'STARTING') return '准备执行'; if (v === 'SUBMITTED') return '任务已提交'; if (v === 'RUNNING') return '执行中'; if (v === 'SUCCEEDED') return '执行成功'; if (v === 'FAILED') return '执行失败'; return v || '已决策'; } items = items.map(function(item) { return {...item, taskTypeText: taskTypeText(item.taskType), decisionTargetText: targetText(item.decisionTarget), inputSizeText: (item.inputSizeMb || 0) + ' MB', deadlineText: (item.deadlineMs || '-') + ' ms', terminalLoadText: 'CPU ' + (item.terminalCpuLoad || 0) + '% / 内存 ' + (item.terminalMemoryLoad || 0) + '%', edgeContextText: '负载 ' + (item.edgeLoad || 0) + '% / 时延 ' + (item.edgeLatencyMs || 0) + ' ms', centerContextText: '负载 ' + (item.centerLoad || 0) + '% / 时延 ' + (item.centerLatencyMs || 0) + ' ms', decisionLatencyText: (item.decisionLatencyMs || '-') + ' ms', executeStatusText: executionStatusText(item.executeStatus)}; }); return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items, total: total}};"
       },
+      "perPage": 20,
+      "perPageAvailable": [10, 20, 50],
       "interval": 5000,
       "silentPolling": true,
       "filter": {
@@ -37,64 +35,19 @@
         ]
       },
       "headerToolbar": [
-        {
-          "type": "reload",
-          "label": "刷新",
-          "level": "primary"
-        },
-        {
-          "type": "columns-toggler",
-          "align": "right",
-          "icon": "fas fa-cog",
-          "overlay": true
-        }
+        { "type": "reload", "label": "刷新", "level": "primary" },
+        { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
       ],
       "columns": [
-        {
-          "name": "createdAt",
-          "label": "请求时间",
-          "align": "center"
-        },
-        {
-          "name": "terminalCode",
-          "label": "终端",
-          "align": "center"
-        },
-        {
-          "name": "clusterCode",
-          "label": "所属边缘云",
-          "align": "center"
-        },
-        {
-          "name": "taskTypeText",
-          "label": "任务类型",
-          "align": "center"
-        },
-        {
-          "name": "inputSizeText",
-          "label": "输入数据量",
-          "align": "center"
-        },
-        {
-          "name": "deadlineText",
-          "label": "截止时延",
-          "align": "center"
-        },
-        {
-          "name": "terminalLoadText",
-          "label": "终端资源",
-          "align": "center"
-        },
-        {
-          "name": "edgeContextText",
-          "label": "边缘云状态",
-          "align": "center"
-        },
-        {
-          "name": "centerContextText",
-          "label": "中心云状态",
-          "align": "center"
-        },
+        { "name": "createdAt", "label": "请求时间", "align": "center" },
+        { "name": "terminalCode", "label": "终端", "align": "center" },
+        { "name": "clusterCode", "label": "所属边缘云", "align": "center" },
+        { "name": "taskTypeText", "label": "任务类型", "align": "center" },
+        { "name": "inputSizeText", "label": "输入数据量", "align": "center" },
+        { "name": "deadlineText", "label": "截止时延", "align": "center" },
+        { "name": "terminalLoadText", "label": "终端资源", "align": "center" },
+        { "name": "edgeContextText", "label": "边缘云状态", "align": "center" },
+        { "name": "centerContextText", "label": "中心云状态", "align": "center" },
         {
           "name": "decisionTargetText",
           "label": "卸载去向",
@@ -107,18 +60,65 @@
           },
           "align": "center"
         },
+        { "name": "decisionLatencyText", "label": "决策时延", "align": "center" },
+        { "name": "executeStatusText", "label": "执行状态", "align": "center" },
         {
-          "name": "decisionLatencyText",
-          "label": "决策时延",
-          "align": "center"
-        },
-        {
-          "name": "executeStatusText",
-          "label": "处理状态",
-          "align": "center"
+          "type": "operation",
+          "label": "操作",
+          "align": "center",
+          "buttons": [
+            {
+              "type": "button",
+              "label": "执行结果",
+              "level": "info",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "卸载执行结果 - ${taskId}",
+                "size": "lg",
+                "body": {
+                  "type": "service",
+                  "initFetch": true,
+                  "interval": 3000,
+                  "silentPolling": true,
+                  "api": {
+                    "method": "get",
+                    "url": "${API_HOST}/datastream/offload/result?taskId=${taskId}",
+                    "adaptor": "var data = payload.data || {}; var statusMap = {STARTING: '准备执行', SUBMITTED: '任务已提交', RUNNING: '执行中', SUCCEEDED: '执行成功', FAILED: '执行失败'}; function phaseText(value) { if (value === 'SUCCEEDED') return '执行成功'; if (value === 'FAILED') return '执行失败'; if (value === 'RUNNING') return '执行中'; if (value === 'PENDING') return '等待执行'; return value || '未知'; } function displayValue(value) { if (value == null) return ''; if (typeof value === 'object') return value.message || value.result || value.path || '已生成'; return String(value); } data.executeStatusText = statusMap[data.executeStatus] || data.executeStatus || '已决策'; var raw = data.executionResult || ''; var parsed = null; if (raw && typeof raw === 'string') { try { parsed = JSON.parse(raw); } catch (e) {} } data.hasStructuredResult = !!(parsed && typeof parsed === 'object' && !Array.isArray(parsed)); var nodes = data.hasStructuredResult && Array.isArray(parsed.nodes) ? parsed.nodes : []; var outputs = data.hasStructuredResult && parsed.outputs && typeof parsed.outputs === 'object' ? parsed.outputs : {}; data.resultSummaryStatusText = data.hasStructuredResult ? (statusMap[parsed.status] || parsed.status || data.executeStatusText) : data.executeStatusText; data.resultSummaryNodeCount = nodes.length; data.resultSummarySuccessCount = nodes.filter(function(node) { return node && node.phase === 'SUCCEEDED'; }).length; data.resultSummaryOutputCount = Object.keys(outputs).length; data.nodeSummaryText = nodes.map(function(node) { var name = node.displayName || node.nodeId || '未命名节点'; var duration = node.executionDurationMs == null ? '' : '，耗时 ' + node.executionDurationMs + ' ms'; return name + '：' + phaseText(node.phase) + duration; }).join(' | '); data.outputSummaryText = Object.keys(outputs).map(function(key) { return key + '：' + displayValue(outputs[key]); }).join(' | '); data.resultMessage = data.hasStructuredResult ? (parsed.message || parsed.error || '') : ''; data.resultPlainText = data.hasStructuredResult ? '' : String(raw || '当前尚未生成执行结果'); return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data};"
+                  },
+                  "body": [
+                    {
+                      "type": "grid",
+                      "columns": [
+                        { "md": 4, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>执行状态</div><h3>${executeStatusText|default:-}</h3></div>" } },
+                        { "md": 4, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>执行位置</div><h3>${executionCluster|default:-}</h3></div>" } },
+                        { "md": 4, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>执行编号</div><div>${executionId|default:-}</div></div>" } }
+                      ]
+                    },
+                    { "type": "divider", "title": "执行摘要" },
+                    {
+                      "type": "grid",
+                      "visibleOn": "this.hasStructuredResult",
+                      "columns": [
+                        { "md": 3, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>结果状态</div><h4>${resultSummaryStatusText|default:-}</h4></div>" } },
+                        { "md": 3, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>节点数量</div><h4>${resultSummaryNodeCount|default:0}</h4></div>" } },
+                        { "md": 3, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>成功节点</div><h4>${resultSummarySuccessCount|default:0}</h4></div>" } },
+                        { "md": 3, "body": { "type": "tpl", "tpl": "<div class='b-a p-3'><div class='text-muted'>输出数量</div><h4>${resultSummaryOutputCount|default:0}</h4></div>" } }
+                      ]
+                    },
+                    { "type": "tpl", "visibleOn": "this.resultMessage", "tpl": "<div class='m-t-sm text-muted'>${resultMessage}</div>" },
+                    { "type": "divider", "title": "节点执行情况", "visibleOn": "this.hasStructuredResult" },
+                    { "type": "tpl", "visibleOn": "this.hasStructuredResult", "tpl": "<div class='b-a p-3' style='line-height: 2; word-break: break-word;'>${nodeSummaryText|default:暂无节点执行信息}</div>" },
+                    { "type": "divider", "title": "输出信息", "visibleOn": "this.hasStructuredResult" },
+                    { "type": "tpl", "visibleOn": "this.hasStructuredResult", "tpl": "<div class='b-a p-3' style='line-height: 2; word-break: break-word;'>${outputSummaryText|default:暂无输出信息}</div>" },
+                    { "type": "tpl", "visibleOn": "!this.hasStructuredResult", "tpl": "<div class='b-a p-3' style='white-space: pre-wrap; word-break: break-word;'>${resultPlainText}</div>" }
+                  ]
+                }
+              }
+            }
+          ]
         }
       ],
-      "placeholder": "暂无卸载任务，启动任务卸载 agent 后会自动出现",
+      "placeholder": "暂无卸载请求记录",
       "tableClassName": "table-db table-striped"
     }
   ]

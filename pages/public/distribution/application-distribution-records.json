@@ -59,8 +59,7 @@
           "align": "center"
         },
         { "name": "namespace", "label": "Namespace", "align": "center" },
-        { "name": "workloadType", "label": "\u8d1f\u8f7d\u7c7b\u578b", "align": "center" },
-        { "name": "workloadName", "label": "\u8d1f\u8f7d", "align": "center" },
+        { "name": "workloadType", "label": "\u5de5\u4f5c\u8d1f\u8f7d\u7c7b\u578b", "align": "center" },
         {
           "name": "status",
           "label": "\u72b6\u6001",

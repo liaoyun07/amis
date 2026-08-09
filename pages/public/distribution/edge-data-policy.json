@@ -1,11 +1,12 @@
 {
   "type": "page",
   "name": "edge-data-policy",
-  "title": "边缘端数据策略",
+  "title": "\u8fb9\u7f18\u6570\u636e\u5904\u7406\u7b56\u7565",
   "body": [
     {
       "type": "crud",
       "name": "edge-data-policy-list",
+      "title": "\u6570\u636e\u5904\u7406\u7b56\u7565",
       "api": {
         "method": "get",
         "url": "${API_HOST}/datastream/edge-data-policy/list",
@@ -13,172 +14,181 @@
       },
       "headerToolbar": [
         {
-          "type": "button",
-          "label": "新增策略",
-          "level": "primary",
-          "actionType": "dialog",
-          "dialog": {
-            "title": "边缘端数据策略",
-            "size": "md",
-            "body": {
-              "type": "form",
-              "api": {
-                "method": "post",
-                "url": "${API_HOST}/datastream/edge-data-policy/save",
-                "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message};"
-              },
-              "body": [
-                { "type": "input-text", "name": "policyName", "label": "策略名称", "required": true },
-                {
-                  "type": "select",
-                  "name": "firstDataType",
-                  "label": "第一数据类型",
-                  "required": true,
-                  "value": "timeseries",
-                  "options": [
-                    { "label": "通用时序数据", "value": "timeseries" },
-                    { "label": "振动数据", "value": "vibration" },
-                    { "label": "温度数据", "value": "temperature" },
-                    { "label": "PLC 状态数据", "value": "plc-status" }
-                  ]
-                },
-                {
-                  "type": "select",
-                  "name": "processorImage",
-                  "label": "处理应用",
-                  "required": true,
-                  "options": [
-                    { "label": "特征提取 edge-preprocess", "value": "edge-preprocess" },
-                    { "label": "异常检测 edge-anomaly", "value": "edge-anomaly" }
-                  ]
-                },
-                {
-                  "type": "select",
-                  "name": "secondDataType",
-                  "label": "第二数据类型",
-                  "required": true,
-                  "options": [
-                    { "label": "特征数据", "value": "feature-data" },
-                    { "label": "异常报告", "value": "anomaly-report" }
-                  ]
-                },
-                {
-                  "type": "select",
-                  "name": "secondDataLocation",
-                  "label": "第二数据去向",
-                  "required": true,
-                  "value": "local",
-                  "options": [
-                    { "label": "保存到边缘云", "value": "local" },
-                    { "label": "上传至中心云", "value": "center" },
-                    { "label": "下发终端", "value": "terminal" }
-                  ]
-                },
-                { "type": "switch", "name": "enabled", "label": "启用", "value": true }
-              ]
-            }
-          }
-        },
-        {
-          "type": "button",
-          "label": "检测触发策略",
-          "level": "success",
-          "actionType": "ajax",
-          "api": {
-            "method": "post",
-            "url": "${API_HOST}/datastream/edge-data-policy/detect",
-            "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: (payload.data && payload.data.message) || payload.message};"
-          },
-          "reload": "edge-data-trigger-list"
-        },
-        { "type": "reload", "label": "刷新", "level": "primary" }
+          "type": "reload",
+          "label": "\u5237\u65b0",
+          "level": "primary"
+        }
       ],
       "columns": [
-        { "name": "policyName", "label": "策略名称" },
+        {
+          "name": "policyName",
+          "label": "\u7b56\u7565\u540d\u79f0"
+        },
         {
           "name": "firstDataType",
-          "label": "第一数据类型",
+          "label": "\u7b2c\u4e00\u6570\u636e\u7c7b\u578b",
           "type": "mapping",
           "map": {
-            "timeseries": "通用时序数据",
-            "vibration": "振动数据",
-            "temperature": "温度数据",
-            "plc-status": "PLC 状态数据",
+            "timeseries": "\u65f6\u5e8f\u6570\u636e",
+            "vibration": "\u632f\u52a8\u6570\u636e",
+            "temperature": "\u6e29\u5ea6\u6570\u636e",
+            "plc-status": "PLC\u72b6\u6001\u6570\u636e",
             "*": "${firstDataType}"
           }
         },
-        { "name": "processorImage", "label": "处理应用" },
         {
-          "name": "secondDataType",
-          "label": "第二数据类型",
+          "name": "processorImage",
+          "label": "\u5904\u7406\u5e94\u7528",
           "type": "mapping",
           "map": {
-            "feature-data": "特征数据",
-            "anomaly-report": "异常报告",
+            "edge-preprocess": "\u7279\u5f81\u63d0\u53d6\u5e94\u7528",
+            "edge-anomaly": "\u5f02\u5e38\u68c0\u6d4b\u5e94\u7528",
+            "*": "${processorImage}"
+          }
+        },
+        {
+          "name": "secondDataType",
+          "label": "\u7b2c\u4e8c\u6570\u636e\u7c7b\u578b",
+          "type": "mapping",
+          "map": {
+            "feature-data": "\u7279\u5f81\u6570\u636e",
+            "anomaly-report": "\u5f02\u5e38\u62a5\u544a",
             "*": "${secondDataType}"
           }
         },
         {
           "name": "secondDataLocation",
-          "label": "第二数据去向",
+          "label": "\u7b2c\u4e8c\u6570\u636e\u53bb\u5411",
           "type": "mapping",
           "map": {
-            "local": "保存到边缘云",
-            "center": "上传至中心云",
-            "terminal": "下发终端",
+            "local": "\u8fb9\u7f18\u4e91\u672c\u5730",
+            "center": "\u4e2d\u5fc3\u4e91",
+            "terminal": "\u7ec8\u7aef\u8bbe\u5907",
             "*": "${secondDataLocation}"
           }
         },
-        { "name": "enabled", "label": "启用", "type": "status" },
-        { "name": "updatedAt", "label": "更新时间" },
+        {
+          "name": "enabled",
+          "label": "\u72b6\u6001",
+          "type": "status"
+        },
+        {
+          "name": "updatedAt",
+          "label": "\u66f4\u65b0\u65f6\u95f4"
+        }
+      ],
+      "affixHeader": true,
+      "columnsTogglable": "auto",
+      "placeholder": "\u6682\u65e0\u6570\u636e\u5904\u7406\u7b56\u7565"
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "crud",
+      "name": "edge-data-flow-list",
+      "title": "\u6570\u636e\u6d41\u8f6c\u8bb0\u5f55",
+      "filter": {
+        "title": "",
+        "mode": "horizontal",
+        "wrapWithPanel": false,
+        "body": [
+          {
+            "type": "input-text",
+            "name": "taskName",
+            "label": "\u5173\u952e\u8bcd",
+            "placeholder": "\u6d41\u4efb\u52a1 / \u7b56\u7565 / \u7ec8\u7aef",
+            "clearable": true
+          }
+        ]
+      },
+      "api": {
+        "method": "get",
+        "url": "${API_HOST}/datastream/data-record/flow-list",
+        "data": {
+          "taskName": "${taskName}",
+          "page": "${page}",
+          "perPage": "${perPage}"
+        },
+        "adaptor": "var body = payload.data || {}; var items = body.items || []; function typeText(v) { var m = {'timeseries':'\u65f6\u5e8f\u6570\u636e','vibration':'\u632f\u52a8\u6570\u636e','temperature':'\u6e29\u5ea6\u6570\u636e','plc-status':'PLC\u72b6\u6001\u6570\u636e','feature-data':'\u7279\u5f81\u6570\u636e','anomaly-report':'\u5f02\u5e38\u62a5\u544a','dataset':'\u6570\u636e\u96c6'}; return m[v] || v || '-'; } function locationText(v) { if (!v) return '-'; if (v.indexOf('edge:') === 0) return '\u8fb9\u7f18\u4e91 ' + v.substring(5); if (v === 'center') return '\u4e2d\u5fc3\u4e91'; return v; } function targetText(v) { if (v === 'local') return '\u8fb9\u7f18\u4e91\u672c\u5730'; if (v === 'center') return '\u4e2d\u5fc3\u4e91'; if (v === 'terminal') return '\u7ec8\u7aef\u8bbe\u5907'; return v || '-'; } items = items.map(function(item) { return {...item, executionLocationText: locationText(item.executionLocation), inputDataTypeText: typeText(item.inputDataType), outputDataTypeText: typeText(item.outputDataType), secondDataTargetText: targetText(item.outputTarget) + (item.outputTargetName && item.outputTargetName !== targetText(item.outputTarget) ? ' ' + item.outputTargetName : '')}; }); return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items, total: body.total || 0}};"
+      },
+      "perPage": 20,
+      "perPageAvailable": [
+        10,
+        20,
+        50
+      ],
+      "columns": [
+        {
+          "name": "createdAt",
+          "label": "\u767b\u8bb0\u65f6\u95f4"
+        },
+        {
+          "name": "sourceTerminal",
+          "label": "\u6765\u6e90\u7ec8\u7aef"
+        },
+        {
+          "name": "clusterCode",
+          "label": "\u6240\u5c5e\u8fb9\u7f18\u4e91"
+        },
+        {
+          "name": "executionLocationText",
+          "label": "\u6267\u884c\u4f4d\u7f6e"
+        },
+        {
+          "name": "inputDataTypeText",
+          "label": "\u7b2c\u4e00\u6570\u636e"
+        },
+        {
+          "name": "policyName",
+          "label": "\u89e6\u53d1\u7b56\u7565"
+        },
+        {
+          "name": "processorImage",
+          "label": "\u5904\u7406\u5e94\u7528"
+        },
+        {
+          "name": "outputDataTypeText",
+          "label": "\u7b2c\u4e8c\u6570\u636e"
+        },
+        {
+          "name": "secondDataTargetText",
+          "label": "\u7b2c\u4e8c\u6570\u636e\u53bb\u5411"
+        },
+        {
+          "name": "processStatus",
+          "label": "\u5904\u7406\u72b6\u6001"
+        },
         {
           "type": "operation",
-          "label": "操作",
+          "label": "\u8be6\u60c5",
           "buttons": [
             {
               "type": "button",
-              "label": "删除",
+              "label": "\u67e5\u770b",
               "level": "link",
-              "className": "text-danger",
-              "actionType": "ajax",
-              "confirmText": "确认删除策略 ${policyName} ?",
-              "api": {
-                "method": "get",
-                "url": "${API_HOST}/datastream/edge-data-policy/delete?id=${id}",
-                "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message};"
-              },
-              "reload": "edge-data-policy-list"
+              "actionType": "dialog",
+              "dialog": {
+                "title": "\u6570\u636e\u6d41\u8f6c\u8be6\u60c5",
+                "size": "lg",
+                "body": {
+                  "type": "property",
+                  "items": [
+                    {"label": "\u89e6\u53d1\u6d41\u4efb\u52a1", "content": "${flowTaskName || '-'}"},
+                    {"label": "\u7b56\u7565\u548c\u5e94\u7528", "content": "${policyName || '-'} / ${processorImage || '-'}"},
+                    {"label": "\u7b2c\u4e00\u6570\u636e\u8def\u5f84", "content": "${inputPath || '-'}"},
+                    {"label": "\u7b2c\u4e8c\u6570\u636e\u8def\u5f84", "content": "${outputPath || '-'}"},
+                    {"label": "\u5904\u7406\u72b6\u6001", "content": "${processStatus || '-'}"}
+                  ]
+                }
+              }
             }
           ]
         }
       ],
       "affixHeader": true,
-      "columnsTogglable": "auto"
-    },
-    { "type": "divider" },
-    {
-      "type": "crud",
-      "name": "edge-data-trigger-list",
-      "title": "策略触发记录",
-      "api": {
-        "method": "get",
-        "url": "${API_HOST}/datastream/edge-data-policy/trigger-records",
-        "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: payload.data || []}};"
-      },
-      "headerToolbar": [
-        { "type": "reload", "label": "刷新", "level": "primary" }
-      ],
-      "columns": [
-        { "name": "policyName", "label": "策略名称" },
-        { "name": "firstDataPath", "label": "第一数据路径" },
-        { "name": "triggeredTaskName", "label": "触发流任务" },
-        { "name": "status", "label": "状态" },
-        { "name": "message", "label": "说明" },
-        { "name": "createdAt", "label": "触发时间" }
-      ],
-      "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "暂无策略触发记录"
+      "placeholder": "\u6682\u65e0\u6570\u636e\u6d41\u8f6c\u8bb0\u5f55"
     }
   ]
 }

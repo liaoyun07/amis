@@ -1,6 +1,6 @@
 {
   "type": "page",
-  "title": "对象存储数据",
+  "title": "数据产物",
   "body": [
     {
       "type": "crud",
@@ -10,14 +10,14 @@
         "title": "查询条件",
         "mode": "inline",
         "body": [
-          { "type": "input-text", "name": "bucket", "label": "Bucket", "value": "flow-data" },
+          { "type": "input-text", "name": "bucket", "label": "Bucket", "value": "fedavg-flow", "placeholder": "fedavg-flow 或 edge-data" },
           { "type": "input-text", "name": "prefix", "label": "Prefix", "placeholder": "fedavg-flow-demo-retry/" },
           { "type": "submit", "label": "查询", "level": "primary" }
         ]
       },
       "api": {
         "method": "get",
-        "url": "${API_HOST}/datastream/minio/list?bucket=${bucket|default:flow-data}&prefix=${prefix}",
+        "url": "${API_HOST}/datastream/minio/list?bucket=${bucket|default:fedavg-flow}&prefix=${prefix}",
         "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: payload.data || [] } };"
       },
       "headerToolbar": [

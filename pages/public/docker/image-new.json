@@ -1,6 +1,6 @@
 {
   "type": "page",
-  "title": "创建镜像",
+  "title": "镜像上传与发布",
   "toolbar": [
     {
       "type": "button",
@@ -22,6 +22,7 @@
           "success": "镜像创建请求已提交，请至应用与镜像仓库查询。"
         },
         "method": "post",
+        "requestAdaptor": "var data = api.data || {}; var existing = data.applicationMode === 'existing'; var selected = data.targetClusterChoices || []; if (!Array.isArray(selected)) selected = String(selected || '').split(','); selected = selected.map(function(v){ return String(v || '').trim(); }).filter(function(v){ return !!v; }); data.imageName = existing ? data.existingAppName : data.newAppName; data.dispatchMode = 'version_update'; data.targetScope = 'explicit'; data.targetClusters = selected.join(','); delete data.targetClusterChoices; delete data.applicationMode; delete data.newAppName; delete data.existingAppName; return api;",
         "adaptor": "return {\n    ...payload,\n    status: payload.status === 200 ? 0 : payload.status,\n    msg: payload.message,\n    data: {response: payload.data}\n}"
       },
       "actions": [
@@ -33,11 +34,41 @@
       ],
       "body": [
         {
-          "type": "input-text",
-          "name": "imageName",
-          "label": "镜像名称",
+          "type": "select",
+          "name": "applicationMode",
+          "label": "应用类型",
+          "value": "new",
           "required": true,
+          "options": [
+            { "label": "新建应用", "value": "new" },
+            { "label": "已有应用发布新版本", "value": "existing" }
+          ]
+        },
+        {
+          "type": "input-text",
+          "name": "newAppName",
+          "label": "应用名称",
+          "required": true,
+          "visibleOn": "${applicationMode === 'new'}",
+          "placeholder": "例如：edge-preprocess",
           "size": "sm"
+        },
+        {
+          "type": "select",
+          "name": "existingAppName",
+          "label": "已有应用",
+          "required": true,
+          "visibleOn": "${applicationMode === 'existing'}",
+          "source": "${API_HOST}/datastream/app-catalog/options",
+          "placeholder": "请选择已有应用"
+        },
+        {
+          "type": "input-text",
+          "name": "version",
+          "label": "版本",
+          "value": "latest",
+          "required": true,
+          "placeholder": "latest"
         },
         {
           "type": "input-file",
@@ -49,40 +80,16 @@
           "asBlob": true
         },
         {
-          "type": "select",
-          "name": "dispatchMode",
-          "label": "分发方式",
-          "value": "on_demand",
-          "options": [
-            { "label": "按需分发", "value": "on_demand" },
-            { "label": "启动前预热", "value": "preload" },
-            { "label": "广播到全部边缘", "value": "broadcast" }
-          ]
-        },
-        {
-          "type": "select",
-          "name": "targetScope",
-          "label": "目标范围",
-          "value": "participating",
-          "options": [
-            { "label": "本次参与边缘", "value": "participating" },
-            { "label": "全部边缘", "value": "all_edges" },
-            { "label": "指定边缘", "value": "explicit" }
-          ]
-        },
-        {
-          "type": "input-text",
-          "name": "targetClusters",
-          "label": "指定边缘",
-          "placeholder": "edge-a,edge-b",
-          "visibleOn": "${targetScope === 'explicit'}"
-        },
-        {
-          "type": "textarea",
-          "name": "triggerCondition",
-          "label": "触发说明",
-          "minRows": 2,
-          "placeholder": "例如：任务启动前预热到参与边缘"
+          "type": "checkboxes",
+          "name": "targetClusterChoices",
+          "label": "分发边缘云",
+          "required": true,
+          "source": "${API_HOST}/datastream/flow/template/cluster/options?target=EDGE",
+          "description": "新建应用选择首次分发目标，已有应用发布新版本选择本次更新目标。",
+          "visibleOn": "${applicationMode === 'new' || applicationMode === 'existing'}",
+          "joinValues": false,
+          "extractValue": true,
+          "columnsCount": 3
         }
       ]
     }

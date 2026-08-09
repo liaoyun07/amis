@@ -1,7 +1,7 @@
 {
   "type": "page",
   "name": "data-records",
-  "title": "数据流转记录",
+  "title": "\u6570\u636e\u6d41\u8f6c\u8bb0\u5f55",
   "body": [
     {
       "type": "crud",
@@ -14,85 +14,51 @@
           {
             "type": "input-text",
             "name": "taskName",
-            "label": "关键词",
-            "placeholder": "流任务 / 策略 / 终端",
+            "label": "\u5173\u952e\u8bcd",
+            "placeholder": "\u6d41\u4efb\u52a1 / \u7b56\u7565 / \u7ec8\u7aef",
             "clearable": true
           }
         ]
       },
-      "headerToolbar": [
-        { "type": "reload", "label": "刷新", "level": "primary" },
-        { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
-      ],
       "api": {
         "method": "get",
         "url": "${API_HOST}/datastream/data-record/flow-list",
-        "data": { "taskName": "${taskName}" },
-        "adaptor": "var items = payload.data || [];\nfunction typeText(v) { var m = {'timeseries':'通用时序数据','vibration':'振动数据','temperature':'温度数据','plc-status':'PLC 状态数据','feature-data':'特征数据','anomaly-report':'异常报告','dataset':'数据集'}; return m[v] || v || '-'; }\nfunction targetTypeText(v) { if (v === 'local') return '边缘云'; if (v === 'center') return '中心云'; if (v === 'terminal') return '终端'; return v || '-'; }\nfunction locationText(v) { if (!v) return '-'; if (v.indexOf('edge:') === 0) return '边缘云 ' + v.substring(5); if (v === 'center') return '中心云'; if (v === 'terminal') return '终端'; return v; }\nfunction statusText(v) { if (!v) return '-'; if (v === '待处理' || v.indexOf('寰') === 0) return '待处理'; if (v === '处理中' || v.indexOf('澶勣悊涓') === 0) return '处理中'; if (v === '处理完成' || v.indexOf('澶勭悊瀹') === 0) return '处理完成'; if (v === '处理失败' || v.indexOf('澶勭悊澶') === 0) return '处理失败'; return v; }\nitems = items.map(function(item) { return {...item, executionLocationText: locationText(item.executionLocation), inputDataTypeText: typeText(item.inputDataType), outputDataTypeText: typeText(item.outputDataType), outputTargetTypeText: targetTypeText(item.outputTarget), outputTargetNameText: item.outputTargetName || '-', processStatusText: statusText(item.processStatus)}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
-      },
-      "columns": [
-        { "name": "createdAt", "label": "登记时间" },
-        { "name": "sourceTerminal", "label": "来源终端" },
-        { "name": "clusterCode", "label": "所属边缘云" },
-        { "name": "executionLocationText", "label": "执行位置" },
-        { "name": "inputDataTypeText", "label": "输入数据类型" },
-        { "name": "policyName", "label": "触发策略" },
-        { "name": "processorImage", "label": "处理应用" },
-        { "name": "flowTaskName", "label": "触发流任务" },
-        { "name": "outputDataTypeText", "label": "输出数据类型" },
-        { "name": "outputTargetTypeText", "label": "去向类型" },
-        { "name": "outputTargetNameText", "label": "去向对象" },
-        {
-          "name": "processStatusText",
-          "label": "处理状态",
-          "type": "mapping",
-          "map": {
-            "待处理": "<span class='label label-default'>待处理</span>",
-            "处理中": "<span class='label label-info'>处理中</span>",
-            "处理完成": "<span class='label label-success'>处理完成</span>",
-            "处理失败": "<span class='label label-danger'>处理失败</span>",
-            "*": "${processStatusText}"
-          }
+        "data": {
+          "taskName": "${taskName}",
+          "page": "${page}",
+          "perPage": "${perPage}"
         },
+        "adaptor": "var body = payload.data || {}; return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: body.items || [], total: body.total || 0}};"
+      },
+      "perPage": 20,
+      "perPageAvailable": [10, 20, 50],
+      "columns": [
+        {"name": "createdAt", "label": "\u767b\u8bb0\u65f6\u95f4"},
+        {"name": "sourceTerminal", "label": "\u6765\u6e90\u7ec8\u7aef"},
+        {"name": "clusterCode", "label": "\u6240\u5c5e\u8fb9\u7f18\u4e91"},
+        {"name": "policyName", "label": "\u89e6\u53d1\u7b56\u7565"},
+        {"name": "processorImage", "label": "\u5904\u7406\u5e94\u7528"},
+        {"name": "outputTargetName", "label": "\u7b2c\u4e8c\u6570\u636e\u53bb\u5411"},
+        {"name": "processStatus", "label": "\u5904\u7406\u72b6\u6001"},
         {
           "type": "operation",
-          "label": "详情",
+          "label": "\u8be6\u60c5",
           "buttons": [
             {
               "type": "button",
-              "label": "查看",
+              "label": "\u67e5\u770b",
               "level": "link",
               "actionType": "dialog",
               "dialog": {
-                "title": "数据流转详情",
-                "size": "lg",
-                "body": [
-                  {
-                    "type": "property",
-                    "items": [
-                      { "label": "登记时间", "content": "${createdAt}" },
-                      { "label": "来源终端", "content": "${sourceTerminal || '-'}" },
-                      { "label": "执行位置", "content": "${executionLocationText}" },
-                      { "label": "触发策略", "content": "${policyName || '-'}" },
-                      { "label": "触发任务", "content": "${flowTaskName || '-'}" },
-                      { "label": "处理应用", "content": "${processorImage || '-'}" },
-                      { "label": "输出类型", "content": "${outputDataTypeText}" },
-                      { "label": "去向", "content": "${outputTargetTypeText} / ${outputTargetNameText}" },
-                      { "label": "处理状态", "content": "${processStatusText}" }
-                    ]
-                  },
-                  {
-                    "type": "divider"
-                  },
-                  {
-                    "type": "property",
-                    "title": "数据路径",
-                    "items": [
-                      { "label": "输入数据路径", "content": "${inputPath || '-'}" },
-                      { "label": "输出数据路径", "content": "${outputPath || '-'}" }
-                    ]
-                  }
-                ]
+                "title": "\u6570\u636e\u6d41\u8f6c\u8be6\u60c5",
+                "body": {
+                  "type": "property",
+                  "items": [
+                    {"label": "\u7b2c\u4e00\u6570\u636e\u8def\u5f84", "content": "${inputPath || '-'}"},
+                    {"label": "\u7b2c\u4e8c\u6570\u636e\u8def\u5f84", "content": "${outputPath || '-'}"},
+                    {"label": "\u89e6\u53d1\u6d41\u4efb\u52a1", "content": "${flowTaskName || '-'}"}
+                  ]
+                }
               }
             }
           ]
@@ -100,7 +66,7 @@
       ],
       "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "暂无数据流转记录"
+      "placeholder": "\u6682\u65e0\u6570\u636e\u6d41\u8f6c\u8bb0\u5f55"
     }
   ]
 }

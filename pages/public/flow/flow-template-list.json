@@ -1,6 +1,6 @@
 {
   "type": "page",
-  "title": "流任务编排中心",
+  "title": "流任务模板编排",
   "body": [
     {
       "type": "crud",
@@ -9,24 +9,26 @@
       "api": {
         "method": "get",
         "url": "${API_HOST}/datastream/flow/template/list",
-        "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: payload.data || [] } };"
+        "adaptor": "function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nvar items = (payload.data || []).map(function(item){ return { ...item, taskTypeText: flowTaskTypeText(item.taskType), modelTypeText: flowModelTypeText(item.modelType) }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { items: items } };"
       },
       "headerToolbar": [
         {
           "type": "button",
-          "label": "新建通用编排模板",
+          "label": "新建流任务模板",
           "level": "primary",
           "actionType": "dialog",
           "dialog": {
-            "title": "新建通用流任务编排模板",
+            "title": "新建流任务模板",
             "size": "full",
             "body": {
               "type": "form",
               "mode": "normal",
               "data": {
                 "modelType": "MIXED",
-                "timeoutSeconds": 1800,
-                "autoCleanup": true,
+                "resultDisplay": {
+                  "enabled": false,
+                  "type": "LINE"
+                },
                 "nodes": [],
                 "edges": [],
                 "loopRows": [],
@@ -36,7 +38,7 @@
               "api": {
                 "method": "post",
                 "url": "${API_HOST}/datastream/flow/template/save",
-                "requestAdaptor": "function parseValue(value, type){\n  if(value === undefined || value === null || value === '') return value;\n  if(type === 'NUMBER') return Number(value);\n  if(type === 'BOOLEAN') return value === true || value === 'true';\n  if(type === 'JSON') return typeof value === 'string' ? JSON.parse(value) : value;\n  return value;\n}\nfunction compact(obj){\n  Object.keys(obj).forEach(function(key){\n    if(obj[key] === undefined || obj[key] === null || obj[key] === '') delete obj[key];\n    if(Array.isArray(obj[key]) && !obj[key].length) delete obj[key];\n  });\n  return obj;\n}\nfunction splitIds(value){\n  return String(value || '').split(',').map(function(item){ return item.trim(); }).filter(Boolean);\n}\nfunction safePart(value){\n  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n}\nfunction clone(obj){\n  return JSON.parse(JSON.stringify(obj || {}));\n}\nfunction replaceText(value, clusterCode, index){\n  if(typeof value !== 'string') return value;\n  return value.replace(/{{clusterCode}}/g, clusterCode || '')\n    .replace(/{{clusterIndex}}/g, String(index || ''))\n    .replace(/{{globalIndex}}/g, String(index || ''));\n}\nfunction replacePlaceholders(value, clusterCode, index){\n  if(Array.isArray(value)) return value.map(function(item){ return replacePlaceholders(item, clusterCode, index); });\n  if(value && typeof value === 'object'){\n    Object.keys(value).forEach(function(key){ value[key] = replacePlaceholders(value[key], clusterCode, index); });\n    return value;\n  }\n  return replaceText(value, clusterCode, index);\n}\nfunction parseOptions(row){\n  if(Array.isArray(row.options) && row.options.length) return row.options.filter(function(item){ return item && item.value !== undefined && item.value !== null && item.value !== ''; }).map(function(item){ return { label: item.label || String(item.value), value: item.value }; });\n  return String(row.optionsText || '').split(/\\r?\\n|,/).map(function(line){\n    var text = line.trim();\n    if(!text) return null;\n    var index = text.indexOf('=');\n    if(index < 0) return { label: text, value: text };\n    var label = text.substring(0, index).trim();\n    var value = text.substring(index + 1).trim();\n    return value ? { label: label || value, value: value } : null;\n  }).filter(Boolean);\n}\nfunction normalizeRuntimeParams(rows){\n  return (rows || []).filter(function(item){ return item && item.key; }).map(function(item){\n    var row = clone(item);\n    row.key = String(row.key).trim();\n    row.label = row.label || row.key;\n    row.valueType = (row.valueType || 'STRING').toUpperCase();\n    row.controlType = (row.controlType || 'INPUT').toUpperCase();\n    row.defaultValue = parseValue(row.defaultValue, row.valueType);\n    row.required = !!row.required;\n    row.options = row.controlType === 'SELECT' ? parseOptions(row) : [];\n    delete row.optionsText;\n    return compact(row);\n  });\n}\nfunction bindingFromParam(param){\n  return compact({\n    key: param.key,\n    label: param.label || param.key,\n    valueType: param.valueType || 'STRING',\n    defaultValue: param.defaultValue,\n    bindType: 'ENV',\n    bindTarget: param.key,\n    required: !!param.required,\n    description: param.description\n  });\n}\nfunction putDefault(defaults, param){\n  if(param && param.key && param.defaultValue !== undefined && param.defaultValue !== null && param.defaultValue !== '') defaults[param.key] = param.defaultValue;\n}\nfunction applyEnvRows(node){\n  var env = node.env && typeof node.env === 'object' ? clone(node.env) : {};\n  (node.envRows || []).forEach(function(row){\n    if(row && row.key) env[row.key] = row.value === undefined || row.value === null ? '' : String(row.value);\n  });\n  if(Object.keys(env).length) node.env = env;\n  else delete node.env;\n  delete node.envRows;\n  delete node.envJson;\n}\nfunction applyParamBindings(node, runtimeParams, runtimeParamMap, defaults){\n  var bindings = {};\n  var rawKeys = Array.isArray(node.usedParamKeys) ? node.usedParamKeys : splitIds(node.usedParamKeys);\n  var keys = rawKeys.filter(function(key){ return key; });\n  if(!keys.length && node.autoBindParams !== false) keys = runtimeParams.map(function(param){ return param.key; });\n  keys.forEach(function(key){\n    var param = runtimeParamMap[key] || { key: key, label: key, valueType: 'STRING' };\n    bindings[key] = bindingFromParam(param);\n    putDefault(defaults, param);\n  });\n  (node.paramBindings || []).forEach(function(item){\n    if(!item || !item.key) return;\n    var param = clone(item);\n    param.valueType = param.valueType || 'STRING';\n    param.defaultValue = parseValue(param.defaultValue, param.valueType);\n    param.bindType = 'ENV';\n    param.bindTarget = param.key;\n    bindings[param.key] = compact(param);\n    putDefault(defaults, param);\n  });\n  node.paramBindings = Object.keys(bindings).map(function(key){ return bindings[key]; });\n  delete node.usedParamKeys;\n  delete node.autoBindParams;\n}\nfunction expandRefs(expansionMap, id){\n  return expansionMap[id] || [{ id: id, clusterCode: '' }];\n}\nfunction pushEdge(edges, seen, from, to, dataKey){\n  if(!from || !to || from === to) return;\n  var key = from + '->' + to + '#' + (dataKey || '');\n  if(seen[key]) return;\n  seen[key] = true;\n  edges.push(compact({ from: from, to: to, dataKey: dataKey }));\n}\nfunction expandEdges(logicalEdges, expansionMap){\n  var edges = [];\n  var seen = {};\n  (logicalEdges || []).forEach(function(edge){\n    var froms = expandRefs(expansionMap, edge.from);\n    var tos = expandRefs(expansionMap, edge.to);\n    tos.forEach(function(to){\n      var matched = froms.filter(function(from){ return from.clusterCode && to.clusterCode && from.clusterCode === to.clusterCode; });\n      var sources = matched.length ? matched : froms;\n      sources.forEach(function(from){ pushEdge(edges, seen, from.id, to.id, edge.dataKey); });\n    });\n  });\n  return edges;\n}\nfunction expandedIds(expansionMap, value){\n  var ids = [];\n  splitIds(value).forEach(function(id){\n    expandRefs(expansionMap, id).forEach(function(ref){ ids.push(ref.id); });\n  });\n  return ids;\n}\nfunction deriveLoopNodes(startValue, endValue, edges, nodes){\n  var starts = splitIds(startValue);\n  var ends = splitIds(endValue);\n  if(!starts.length || !ends.length) return [];\n  var ids = (nodes || []).map(function(n){ return n.id; }).filter(Boolean);\n  var next = {};\n  var prev = {};\n  ids.forEach(function(id){ next[id] = []; prev[id] = []; });\n  (edges || []).forEach(function(e){\n    if(next[e.from]) next[e.from].push(e.to);\n    if(prev[e.to]) prev[e.to].push(e.from);\n  });\n  var reach = {};\n  function walkForward(id){ if(reach[id]) return; reach[id] = true; (next[id] || []).forEach(walkForward); }\n  starts.forEach(walkForward);\n  var canEnd = {};\n  function walkBack(id){ if(canEnd[id]) return; canEnd[id] = true; (prev[id] || []).forEach(walkBack); }\n  ends.forEach(walkBack);\n  var selected = {};\n  ids.forEach(function(id){ if(reach[id] && canEnd[id]) selected[id] = true; });\n  var indegree = {};\n  ids.forEach(function(id){ if(selected[id]) indegree[id] = 0; });\n  (edges || []).forEach(function(e){ if(selected[e.from] && selected[e.to]) indegree[e.to] = (indegree[e.to] || 0) + 1; });\n  var queue = ids.filter(function(id){ return selected[id] && indegree[id] === 0; });\n  var ordered = [];\n  while(queue.length){\n    var id = queue.shift();\n    ordered.push(id);\n    (next[id] || []).forEach(function(to){\n      if(!selected[to]) return;\n      indegree[to] -= 1;\n      if(indegree[to] === 0) queue.push(to);\n    });\n  }\n  return ordered;\n}\nvar runtimeParams = normalizeRuntimeParams(api.data.runtimeParams);\nvar runtimeParamMap = {};\nvar defaults = {};\nruntimeParams.forEach(function(param){ runtimeParamMap[param.key] = param; putDefault(defaults, param); });\nvar expansionMap = {};\nvar expandedNodes = [];\n(api.data.nodes || []).forEach(function(rawNode){\n  var selectedClusters = Array.isArray(rawNode.expandClusterCodes) ? rawNode.expandClusterCodes.filter(function(code){ return code; }) : [];\n  var base = clone(rawNode);\n  base.type = 'JOB';\n  delete base.expandBy;\n  delete base.expandClusterCodes;\n  applyEnvRows(base);\n  applyParamBindings(base, runtimeParams, runtimeParamMap, defaults);\n  if(base.target === 'EDGE' && selectedClusters.length > 1){\n    expansionMap[base.id] = [];\n    selectedClusters.forEach(function(clusterCode, index){\n      var node = replacePlaceholders(clone(base), clusterCode, index + 1);\n      var suffix = safePart(clusterCode) || ('edge-' + (index + 1));\n      node.id = base.id + '-' + suffix;\n      node.name = (base.name || base.id) + ' @ ' + clusterCode;\n      node.clusterCode = clusterCode;\n      node.clusterIndex = index + 1;\n      node.globalIndex = index + 1;\n      node.target = 'EDGE';\n      node.type = 'JOB';\n      expansionMap[base.id].push({ id: node.id, clusterCode: clusterCode });\n      expandedNodes.push(compact(node));\n    });\n  } else {\n    var clusterCode = base.target === 'EDGE' && selectedClusters.length === 1 ? selectedClusters[0] : base.clusterCode;\n    var originalId = base.id;\n    var node = replacePlaceholders(base, clusterCode || '', 1);\n    if(base.target === 'EDGE' && selectedClusters.length === 1){\n      node.clusterCode = selectedClusters[0];\n      node.clusterIndex = 1;\n      node.globalIndex = 1;\n    }\n    expansionMap[originalId] = [{ id: node.id, clusterCode: node.clusterCode || '' }];\n    expandedNodes.push(compact(node));\n  }\n});\nvar logicalEdges = [];\n(api.data.dependencyRows || []).forEach(function(row){\n  if(!row || !row.nodeId) return;\n  splitIds(row.dependsOn).forEach(function(dep){\n    logicalEdges.push(compact({ from: dep, to: row.nodeId, dataKey: row.dataKey }));\n  });\n});\nvar edges = expandEdges(logicalEdges, expansionMap);\napi.data.nodes = expandedNodes;\napi.data.edges = edges;\napi.data.loops = (api.data.loopRows || []).filter(function(row){ return row && row.id && row.startNode && row.endNode && row.countParam; }).map(function(row){\n  defaults[row.countParam] = parseValue(row.countDefault, row.countValueType || 'NUMBER');\n  var startIds = expandedIds(expansionMap, row.startNode);\n  var endIds = expandedIds(expansionMap, row.endNode);\n  var nodeIds = deriveLoopNodes(startIds.join(','), endIds.join(','), edges, api.data.nodes);\n  if(!nodeIds.length){\n    var seenLoopNode = {};\n    nodeIds = [];\n    startIds.concat(endIds).forEach(function(id){\n      if(id && !seenLoopNode[id]){\n        seenLoopNode[id] = true;\n        nodeIds.push(id);\n      }\n    });\n  }\n  return compact({\n    id: row.id,\n    countParam: row.countParam,\n    start: 1,\n    nodeIds: nodeIds,\n    nextFrom: endIds[0] || nodeIds[nodeIds.length - 1],\n    dataKey: row.dataKey\n  });\n});\napi.data.runtimeParams = runtimeParams;\napi.data.defaultParams = defaults;\napi.data.modelType = api.data.modelType || 'MIXED';\napi.data.policy = { runtime: 'K8S_MULTI', timeoutSeconds: Number(api.data.timeoutSeconds || 1800), autoCleanup: api.data.autoCleanup !== false };\napi.data.splitRule = { ruleName: (api.data.templateName || api.data.templateCode || 'flow') + ' split rule', ruleType: 'MIXED_DAG', description: api.data.description || '', params: {} };\ndelete api.data.dependencyRows;\ndelete api.data.loopRows;\ndelete api.data.parallelRows;\ndelete api.data.runtime;\ndelete api.data.timeoutSeconds;\ndelete api.data.autoCleanup;\nreturn api;",
+                "requestAdaptor": "function parseValue(value, type){\n  if(value === undefined || value === null || value === '') return value;\n  if(type === 'NUMBER') return Number(value);\n  if(type === 'BOOLEAN') return value === true || value === 'true';\n  if(type === 'JSON') return typeof value === 'string' ? JSON.parse(value) : value;\n  return value;\n}\nfunction compact(obj){\n  Object.keys(obj).forEach(function(key){\n    if(obj[key] === undefined || obj[key] === null || obj[key] === '') delete obj[key];\n    if(Array.isArray(obj[key]) && !obj[key].length) delete obj[key];\n  });\n  return obj;\n}\nfunction splitIds(value){\n  return String(value || '').split(',').map(function(item){ return item.trim(); }).filter(Boolean);\n}\nfunction safePart(value){\n  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n}\nfunction clone(obj){\n  return JSON.parse(JSON.stringify(obj || {}));\n}\nfunction replaceText(value, clusterCode, index){\n  if(typeof value !== 'string') return value;\n  return value.replace(/{{clusterCode}}/g, clusterCode || '')\n    .replace(/{{clusterIndex}}/g, String(index || ''))\n    .replace(/{{globalIndex}}/g, String(index || ''));\n}\nfunction replacePlaceholders(value, clusterCode, index){\n  if(Array.isArray(value)) return value.map(function(item){ return replacePlaceholders(item, clusterCode, index); });\n  if(value && typeof value === 'object'){\n    Object.keys(value).forEach(function(key){ value[key] = replacePlaceholders(value[key], clusterCode, index); });\n    return value;\n  }\n  return replaceText(value, clusterCode, index);\n}\nfunction parseOptions(row){\n  if(Array.isArray(row.options) && row.options.length) return row.options.filter(function(item){ return item && item.value !== undefined && item.value !== null && item.value !== ''; }).map(function(item){ return { label: item.label || String(item.value), value: item.value }; });\n  return String(row.optionsText || '').split(/\\r?\\n|,/).map(function(line){\n    var text = line.trim();\n    if(!text) return null;\n    var index = text.indexOf('=');\n    if(index < 0) return { label: text, value: text };\n    var label = text.substring(0, index).trim();\n    var value = text.substring(index + 1).trim();\n    return value ? { label: label || value, value: value } : null;\n  }).filter(Boolean);\n}\nfunction normalizeRuntimeParams(rows){\n  return (rows || []).filter(function(item){ return item && item.key; }).map(function(item){\n    var row = clone(item);\n    row.key = String(row.key).trim();\n    row.label = row.label || row.key;\n    row.valueType = (row.valueType || 'STRING').toUpperCase();\n    row.enumEnabled = row.enumEnabled === true || String(row.enumEnabled || '').toLowerCase() === 'true' || String(row.controlType || '').toUpperCase() === 'SELECT';\n    if(row.valueType === 'BOOLEAN') row.enumEnabled = false;\n    row.defaultValue = parseValue(row.defaultValue, row.valueType);\n    row.required = !!row.required;\n    row.options = row.enumEnabled ? parseOptions(row) : [];\n    delete row.controlType;\n    delete row.optionsText;\n    return compact(row);\n  });\n}\nfunction bindingFromParam(param){\n  return compact({\n    key: param.key,\n    label: param.label || param.key,\n    valueType: param.valueType || 'STRING',\n    defaultValue: param.defaultValue,\n    bindType: 'ENV',\n    bindTarget: param.key,\n    required: !!param.required,\n    description: param.description\n  });\n}\nfunction putDefault(defaults, param){\n  if(param && param.key && param.defaultValue !== undefined && param.defaultValue !== null && param.defaultValue !== '') defaults[param.key] = param.defaultValue;\n}\nfunction applyEnvRows(node){\n  var env = node.env && typeof node.env === 'object' ? clone(node.env) : {};\n  (node.envRows || []).forEach(function(row){\n    if(row && row.key) env[row.key] = row.value === undefined || row.value === null ? '' : String(row.value);\n  });\n  if(Object.keys(env).length) node.env = env;\n  else delete node.env;\n  delete node.envRows;\n  delete node.envJson;\n}\nfunction applyParamBindings(node, runtimeParams, runtimeParamMap, defaults){\n  var bindings = {};\n  var rawKeys = Array.isArray(node.usedParamKeys) ? node.usedParamKeys : splitIds(node.usedParamKeys);\n  var keys = rawKeys.filter(function(key){ return key; });\n  if(!keys.length && node.autoBindParams === true) keys = runtimeParams.map(function(param){ return param.key; });\n  keys.forEach(function(key){\n    var param = runtimeParamMap[key] || { key: key, label: key, valueType: 'STRING' };\n    bindings[key] = bindingFromParam(param);\n    putDefault(defaults, param);\n  });\n  (node.paramBindings || []).forEach(function(item){\n    if(!item || !item.key) return;\n    var param = clone(item);\n    param.valueType = param.valueType || 'STRING';\n    param.defaultValue = parseValue(param.defaultValue, param.valueType);\n    param.bindType = (param.bindType || 'ENV').toUpperCase();\n    if(param.bindType === 'ENV') param.bindTarget = param.bindTarget || param.key;\n    bindings[param.key] = compact(param);\n    putDefault(defaults, param);\n  });\n  node.paramBindings = Object.keys(bindings).map(function(key){ return bindings[key]; });\n  delete node.usedParamKeys;\n  delete node.autoBindParams;\n}\nfunction expandRefs(expansionMap, id){\n  return expansionMap[id] || [{ id: id, clusterCode: '' }];\n}\nfunction pushEdge(edges, seen, from, to, dataKey){\n  if(!from || !to || from === to) return;\n  var key = from + '->' + to + '#' + (dataKey || '');\n  if(seen[key]) return;\n  seen[key] = true;\n  edges.push(compact({ from: from, to: to, dataKey: dataKey }));\n}\nfunction expandEdges(logicalEdges, expansionMap){\n  var edges = [];\n  var seen = {};\n  (logicalEdges || []).forEach(function(edge){\n    var froms = expandRefs(expansionMap, edge.from);\n    var tos = expandRefs(expansionMap, edge.to);\n    tos.forEach(function(to){\n      var matched = froms.filter(function(from){ return from.clusterCode && to.clusterCode && from.clusterCode === to.clusterCode; });\n      var sources = matched.length ? matched : froms;\n      sources.forEach(function(from){ pushEdge(edges, seen, from.id, to.id, edge.dataKey); });\n    });\n  });\n  return edges;\n}\nfunction expandedIds(expansionMap, value){\n  var ids = [];\n  splitIds(value).forEach(function(id){\n    expandRefs(expansionMap, id).forEach(function(ref){ ids.push(ref.id); });\n  });\n  return ids;\n}\nfunction deriveLoopNodes(startValue, endValue, edges, nodes){\n  var starts = splitIds(startValue);\n  var ends = splitIds(endValue);\n  if(!starts.length || !ends.length) return [];\n  var ids = (nodes || []).map(function(n){ return n.id; }).filter(Boolean);\n  var next = {};\n  var prev = {};\n  ids.forEach(function(id){ next[id] = []; prev[id] = []; });\n  (edges || []).forEach(function(e){\n    if(next[e.from]) next[e.from].push(e.to);\n    if(prev[e.to]) prev[e.to].push(e.from);\n  });\n  var reach = {};\n  function walkForward(id){ if(reach[id]) return; reach[id] = true; (next[id] || []).forEach(walkForward); }\n  starts.forEach(walkForward);\n  var canEnd = {};\n  function walkBack(id){ if(canEnd[id]) return; canEnd[id] = true; (prev[id] || []).forEach(walkBack); }\n  ends.forEach(walkBack);\n  var selected = {};\n  ids.forEach(function(id){ if(reach[id] && canEnd[id]) selected[id] = true; });\n  var indegree = {};\n  ids.forEach(function(id){ if(selected[id]) indegree[id] = 0; });\n  (edges || []).forEach(function(e){ if(selected[e.from] && selected[e.to]) indegree[e.to] = (indegree[e.to] || 0) + 1; });\n  var queue = ids.filter(function(id){ return selected[id] && indegree[id] === 0; });\n  var ordered = [];\n  while(queue.length){\n    var id = queue.shift();\n    ordered.push(id);\n    (next[id] || []).forEach(function(to){\n      if(!selected[to]) return;\n      indegree[to] -= 1;\n      if(indegree[to] === 0) queue.push(to);\n    });\n  }\n  return ordered;\n}\nvar runtimeParams = normalizeRuntimeParams(api.data.runtimeParams);\nvar runtimeParamMap = {};\nvar defaults = {};\nruntimeParams.forEach(function(param){ runtimeParamMap[param.key] = param; putDefault(defaults, param); });\nvar expansionMap = {};\nvar expandedNodes = [];\n(api.data.nodes || []).forEach(function(rawNode){\n  var selectedClusters = Array.isArray(rawNode.expandClusterCodes) ? rawNode.expandClusterCodes.filter(function(code){ return code; }) : [];\n  var base = clone(rawNode);\n  base.type = 'JOB';\n  delete base.expandBy;\n  delete base.expandClusterCodes;\n  applyEnvRows(base);\n  applyParamBindings(base, runtimeParams, runtimeParamMap, defaults);\n  if(base.target === 'EDGE' && selectedClusters.length > 1){\n    expansionMap[base.id] = [];\n    selectedClusters.forEach(function(clusterCode, index){\n      var node = replacePlaceholders(clone(base), clusterCode, index + 1);\n      var suffix = safePart(clusterCode) || ('edge-' + (index + 1));\n      node.id = base.id + '-' + suffix;\n      node.name = (base.name || base.id) + ' @ ' + clusterCode;\n      node.clusterCode = clusterCode;\n      node.clusterIndex = index + 1;\n      node.globalIndex = index + 1;\n      node.target = 'EDGE';\n      node.type = 'JOB';\n      expansionMap[base.id].push({ id: node.id, clusterCode: clusterCode });\n      expandedNodes.push(compact(node));\n    });\n  } else {\n    var clusterCode = base.target === 'EDGE' && selectedClusters.length === 1 ? selectedClusters[0] : base.clusterCode;\n    var originalId = base.id;\n    var node = replacePlaceholders(base, clusterCode || '', 1);\n    if(base.target === 'EDGE' && selectedClusters.length === 1){\n      node.clusterCode = selectedClusters[0];\n      node.clusterIndex = 1;\n      node.globalIndex = 1;\n    }\n    expansionMap[originalId] = [{ id: node.id, clusterCode: node.clusterCode || '' }];\n    expandedNodes.push(compact(node));\n  }\n});\nvar logicalEdges = [];\n(api.data.dependencyRows || []).forEach(function(row){\n  if(!row || !row.nodeId) return;\n  splitIds(row.dependsOn).forEach(function(dep){\n    logicalEdges.push(compact({ from: dep, to: row.nodeId, dataKey: row.dataKey }));\n  });\n});\nvar edges = expandEdges(logicalEdges, expansionMap);\napi.data.nodes = expandedNodes;\napi.data.edges = edges;\napi.data.loops = (api.data.loopRows || []).filter(function(row){ return row && row.id && row.startNode && row.endNode && row.countParam; }).map(function(row){\n  defaults[row.countParam] = parseValue(row.countDefault, row.countValueType || 'NUMBER');\n  var startIds = expandedIds(expansionMap, row.startNode);\n  var endIds = expandedIds(expansionMap, row.endNode);\n  var nodeIds = deriveLoopNodes(startIds.join(','), endIds.join(','), edges, api.data.nodes);\n  if(!nodeIds.length){\n    var seenLoopNode = {};\n    nodeIds = [];\n    startIds.concat(endIds).forEach(function(id){\n      if(id && !seenLoopNode[id]){\n        seenLoopNode[id] = true;\n        nodeIds.push(id);\n      }\n    });\n  }\n  return compact({\n    id: row.id,\n    countParam: row.countParam,\n    start: 1,\n    nodeIds: nodeIds,\n    nextFrom: endIds[0] || nodeIds[nodeIds.length - 1],\n    dataKey: row.dataKey\n  });\n});\napi.data.runtimeParams = runtimeParams;\napi.data.defaultParams = defaults;\napi.data.modelType = api.data.modelType || 'MIXED';\napi.data.policy = { runtime: 'K8S_MULTI', timeoutSeconds: Number(api.data.timeoutSeconds || 1800) };\napi.data.splitRule = { ruleName: (api.data.templateName || api.data.templateCode || 'flow') + ' split rule', ruleType: 'MIXED_DAG', description: api.data.description || '', params: {} };\ndelete api.data.dependencyRows;\ndelete api.data.loopRows;\ndelete api.data.parallelRows;\ndelete api.data.runtime;\ndelete api.data.timeoutSeconds;\n\nreturn api;",
                 "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
                 "messages": {
                   "success": "编排模板已保存"
@@ -56,8 +58,8 @@
                       "api": {
                         "method": "post",
                         "url": "${API_HOST}/datastream/flow/template/preview",
-                        "requestAdaptor": "function parseValue(value, type){\n  if(value === undefined || value === null || value === '') return value;\n  if(type === 'NUMBER') return Number(value);\n  if(type === 'BOOLEAN') return value === true || value === 'true';\n  if(type === 'JSON') return typeof value === 'string' ? JSON.parse(value) : value;\n  return value;\n}\nfunction compact(obj){\n  Object.keys(obj).forEach(function(key){\n    if(obj[key] === undefined || obj[key] === null || obj[key] === '') delete obj[key];\n    if(Array.isArray(obj[key]) && !obj[key].length) delete obj[key];\n  });\n  return obj;\n}\nfunction splitIds(value){\n  return String(value || '').split(',').map(function(item){ return item.trim(); }).filter(Boolean);\n}\nfunction safePart(value){\n  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n}\nfunction clone(obj){\n  return JSON.parse(JSON.stringify(obj || {}));\n}\nfunction replaceText(value, clusterCode, index){\n  if(typeof value !== 'string') return value;\n  return value.replace(/{{clusterCode}}/g, clusterCode || '')\n    .replace(/{{clusterIndex}}/g, String(index || ''))\n    .replace(/{{globalIndex}}/g, String(index || ''));\n}\nfunction replacePlaceholders(value, clusterCode, index){\n  if(Array.isArray(value)) return value.map(function(item){ return replacePlaceholders(item, clusterCode, index); });\n  if(value && typeof value === 'object'){\n    Object.keys(value).forEach(function(key){ value[key] = replacePlaceholders(value[key], clusterCode, index); });\n    return value;\n  }\n  return replaceText(value, clusterCode, index);\n}\nfunction parseOptions(row){\n  if(Array.isArray(row.options) && row.options.length) return row.options.filter(function(item){ return item && item.value !== undefined && item.value !== null && item.value !== ''; }).map(function(item){ return { label: item.label || String(item.value), value: item.value }; });\n  return String(row.optionsText || '').split(/\\r?\\n|,/).map(function(line){\n    var text = line.trim();\n    if(!text) return null;\n    var index = text.indexOf('=');\n    if(index < 0) return { label: text, value: text };\n    var label = text.substring(0, index).trim();\n    var value = text.substring(index + 1).trim();\n    return value ? { label: label || value, value: value } : null;\n  }).filter(Boolean);\n}\nfunction normalizeRuntimeParams(rows){\n  return (rows || []).filter(function(item){ return item && item.key; }).map(function(item){\n    var row = clone(item);\n    row.key = String(row.key).trim();\n    row.label = row.label || row.key;\n    row.valueType = (row.valueType || 'STRING').toUpperCase();\n    row.controlType = (row.controlType || 'INPUT').toUpperCase();\n    row.defaultValue = parseValue(row.defaultValue, row.valueType);\n    row.required = !!row.required;\n    row.options = row.controlType === 'SELECT' ? parseOptions(row) : [];\n    delete row.optionsText;\n    return compact(row);\n  });\n}\nfunction bindingFromParam(param){\n  return compact({\n    key: param.key,\n    label: param.label || param.key,\n    valueType: param.valueType || 'STRING',\n    defaultValue: param.defaultValue,\n    bindType: 'ENV',\n    bindTarget: param.key,\n    required: !!param.required,\n    description: param.description\n  });\n}\nfunction putDefault(defaults, param){\n  if(param && param.key && param.defaultValue !== undefined && param.defaultValue !== null && param.defaultValue !== '') defaults[param.key] = param.defaultValue;\n}\nfunction applyEnvRows(node){\n  var env = node.env && typeof node.env === 'object' ? clone(node.env) : {};\n  (node.envRows || []).forEach(function(row){\n    if(row && row.key) env[row.key] = row.value === undefined || row.value === null ? '' : String(row.value);\n  });\n  if(Object.keys(env).length) node.env = env;\n  else delete node.env;\n  delete node.envRows;\n  delete node.envJson;\n}\nfunction applyParamBindings(node, runtimeParams, runtimeParamMap, defaults){\n  var bindings = {};\n  var rawKeys = Array.isArray(node.usedParamKeys) ? node.usedParamKeys : splitIds(node.usedParamKeys);\n  var keys = rawKeys.filter(function(key){ return key; });\n  if(!keys.length && node.autoBindParams !== false) keys = runtimeParams.map(function(param){ return param.key; });\n  keys.forEach(function(key){\n    var param = runtimeParamMap[key] || { key: key, label: key, valueType: 'STRING' };\n    bindings[key] = bindingFromParam(param);\n    putDefault(defaults, param);\n  });\n  (node.paramBindings || []).forEach(function(item){\n    if(!item || !item.key) return;\n    var param = clone(item);\n    param.valueType = param.valueType || 'STRING';\n    param.defaultValue = parseValue(param.defaultValue, param.valueType);\n    param.bindType = 'ENV';\n    param.bindTarget = param.key;\n    bindings[param.key] = compact(param);\n    putDefault(defaults, param);\n  });\n  node.paramBindings = Object.keys(bindings).map(function(key){ return bindings[key]; });\n  delete node.usedParamKeys;\n  delete node.autoBindParams;\n}\nfunction expandRefs(expansionMap, id){\n  return expansionMap[id] || [{ id: id, clusterCode: '' }];\n}\nfunction pushEdge(edges, seen, from, to, dataKey){\n  if(!from || !to || from === to) return;\n  var key = from + '->' + to + '#' + (dataKey || '');\n  if(seen[key]) return;\n  seen[key] = true;\n  edges.push(compact({ from: from, to: to, dataKey: dataKey }));\n}\nfunction expandEdges(logicalEdges, expansionMap){\n  var edges = [];\n  var seen = {};\n  (logicalEdges || []).forEach(function(edge){\n    var froms = expandRefs(expansionMap, edge.from);\n    var tos = expandRefs(expansionMap, edge.to);\n    tos.forEach(function(to){\n      var matched = froms.filter(function(from){ return from.clusterCode && to.clusterCode && from.clusterCode === to.clusterCode; });\n      var sources = matched.length ? matched : froms;\n      sources.forEach(function(from){ pushEdge(edges, seen, from.id, to.id, edge.dataKey); });\n    });\n  });\n  return edges;\n}\nfunction expandedIds(expansionMap, value){\n  var ids = [];\n  splitIds(value).forEach(function(id){\n    expandRefs(expansionMap, id).forEach(function(ref){ ids.push(ref.id); });\n  });\n  return ids;\n}\nfunction deriveLoopNodes(startValue, endValue, edges, nodes){\n  var starts = splitIds(startValue);\n  var ends = splitIds(endValue);\n  if(!starts.length || !ends.length) return [];\n  var ids = (nodes || []).map(function(n){ return n.id; }).filter(Boolean);\n  var next = {};\n  var prev = {};\n  ids.forEach(function(id){ next[id] = []; prev[id] = []; });\n  (edges || []).forEach(function(e){\n    if(next[e.from]) next[e.from].push(e.to);\n    if(prev[e.to]) prev[e.to].push(e.from);\n  });\n  var reach = {};\n  function walkForward(id){ if(reach[id]) return; reach[id] = true; (next[id] || []).forEach(walkForward); }\n  starts.forEach(walkForward);\n  var canEnd = {};\n  function walkBack(id){ if(canEnd[id]) return; canEnd[id] = true; (prev[id] || []).forEach(walkBack); }\n  ends.forEach(walkBack);\n  var selected = {};\n  ids.forEach(function(id){ if(reach[id] && canEnd[id]) selected[id] = true; });\n  var indegree = {};\n  ids.forEach(function(id){ if(selected[id]) indegree[id] = 0; });\n  (edges || []).forEach(function(e){ if(selected[e.from] && selected[e.to]) indegree[e.to] = (indegree[e.to] || 0) + 1; });\n  var queue = ids.filter(function(id){ return selected[id] && indegree[id] === 0; });\n  var ordered = [];\n  while(queue.length){\n    var id = queue.shift();\n    ordered.push(id);\n    (next[id] || []).forEach(function(to){\n      if(!selected[to]) return;\n      indegree[to] -= 1;\n      if(indegree[to] === 0) queue.push(to);\n    });\n  }\n  return ordered;\n}\nvar runtimeParams = normalizeRuntimeParams(api.data.runtimeParams);\nvar runtimeParamMap = {};\nvar defaults = {};\nruntimeParams.forEach(function(param){ runtimeParamMap[param.key] = param; putDefault(defaults, param); });\nvar expansionMap = {};\nvar expandedNodes = [];\n(api.data.nodes || []).forEach(function(rawNode){\n  var selectedClusters = Array.isArray(rawNode.expandClusterCodes) ? rawNode.expandClusterCodes.filter(function(code){ return code; }) : [];\n  var base = clone(rawNode);\n  base.type = 'JOB';\n  delete base.expandBy;\n  delete base.expandClusterCodes;\n  applyEnvRows(base);\n  applyParamBindings(base, runtimeParams, runtimeParamMap, defaults);\n  if(base.target === 'EDGE' && selectedClusters.length > 1){\n    expansionMap[base.id] = [];\n    selectedClusters.forEach(function(clusterCode, index){\n      var node = replacePlaceholders(clone(base), clusterCode, index + 1);\n      var suffix = safePart(clusterCode) || ('edge-' + (index + 1));\n      node.id = base.id + '-' + suffix;\n      node.name = (base.name || base.id) + ' @ ' + clusterCode;\n      node.clusterCode = clusterCode;\n      node.clusterIndex = index + 1;\n      node.globalIndex = index + 1;\n      node.target = 'EDGE';\n      node.type = 'JOB';\n      expansionMap[base.id].push({ id: node.id, clusterCode: clusterCode });\n      expandedNodes.push(compact(node));\n    });\n  } else {\n    var clusterCode = base.target === 'EDGE' && selectedClusters.length === 1 ? selectedClusters[0] : base.clusterCode;\n    var originalId = base.id;\n    var node = replacePlaceholders(base, clusterCode || '', 1);\n    if(base.target === 'EDGE' && selectedClusters.length === 1){\n      node.clusterCode = selectedClusters[0];\n      node.clusterIndex = 1;\n      node.globalIndex = 1;\n    }\n    expansionMap[originalId] = [{ id: node.id, clusterCode: node.clusterCode || '' }];\n    expandedNodes.push(compact(node));\n  }\n});\nvar logicalEdges = [];\n(api.data.dependencyRows || []).forEach(function(row){\n  if(!row || !row.nodeId) return;\n  splitIds(row.dependsOn).forEach(function(dep){\n    logicalEdges.push(compact({ from: dep, to: row.nodeId, dataKey: row.dataKey }));\n  });\n});\nvar edges = expandEdges(logicalEdges, expansionMap);\napi.data.nodes = expandedNodes;\napi.data.edges = edges;\napi.data.loops = (api.data.loopRows || []).filter(function(row){ return row && row.id && row.startNode && row.endNode && row.countParam; }).map(function(row){\n  defaults[row.countParam] = parseValue(row.countDefault, row.countValueType || 'NUMBER');\n  var startIds = expandedIds(expansionMap, row.startNode);\n  var endIds = expandedIds(expansionMap, row.endNode);\n  var nodeIds = deriveLoopNodes(startIds.join(','), endIds.join(','), edges, api.data.nodes);\n  if(!nodeIds.length){\n    var seenLoopNode = {};\n    nodeIds = [];\n    startIds.concat(endIds).forEach(function(id){\n      if(id && !seenLoopNode[id]){\n        seenLoopNode[id] = true;\n        nodeIds.push(id);\n      }\n    });\n  }\n  return compact({\n    id: row.id,\n    countParam: row.countParam,\n    start: 1,\n    nodeIds: nodeIds,\n    nextFrom: endIds[0] || nodeIds[nodeIds.length - 1],\n    dataKey: row.dataKey\n  });\n});\napi.data.runtimeParams = runtimeParams;\napi.data.defaultParams = defaults;\napi.data.modelType = api.data.modelType || 'MIXED';\napi.data.policy = { runtime: 'K8S_MULTI', timeoutSeconds: Number(api.data.timeoutSeconds || 1800), autoCleanup: api.data.autoCleanup !== false };\napi.data.splitRule = { ruleName: (api.data.templateName || api.data.templateCode || 'flow') + ' split rule', ruleType: 'MIXED_DAG', description: api.data.description || '', params: {} };\ndelete api.data.dependencyRows;\ndelete api.data.loopRows;\ndelete api.data.parallelRows;\ndelete api.data.runtime;\ndelete api.data.timeoutSeconds;\ndelete api.data.autoCleanup;\nreturn api;",
-                        "adaptor": "var data = payload.data || {}; var rows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ rows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = rows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                        "requestAdaptor": "function parseValue(value, type){\n  if(value === undefined || value === null || value === '') return value;\n  if(type === 'NUMBER') return Number(value);\n  if(type === 'BOOLEAN') return value === true || value === 'true';\n  if(type === 'JSON') return typeof value === 'string' ? JSON.parse(value) : value;\n  return value;\n}\nfunction compact(obj){\n  Object.keys(obj).forEach(function(key){\n    if(obj[key] === undefined || obj[key] === null || obj[key] === '') delete obj[key];\n    if(Array.isArray(obj[key]) && !obj[key].length) delete obj[key];\n  });\n  return obj;\n}\nfunction splitIds(value){\n  return String(value || '').split(',').map(function(item){ return item.trim(); }).filter(Boolean);\n}\nfunction safePart(value){\n  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');\n}\nfunction clone(obj){\n  return JSON.parse(JSON.stringify(obj || {}));\n}\nfunction replaceText(value, clusterCode, index){\n  if(typeof value !== 'string') return value;\n  return value.replace(/{{clusterCode}}/g, clusterCode || '')\n    .replace(/{{clusterIndex}}/g, String(index || ''))\n    .replace(/{{globalIndex}}/g, String(index || ''));\n}\nfunction replacePlaceholders(value, clusterCode, index){\n  if(Array.isArray(value)) return value.map(function(item){ return replacePlaceholders(item, clusterCode, index); });\n  if(value && typeof value === 'object'){\n    Object.keys(value).forEach(function(key){ value[key] = replacePlaceholders(value[key], clusterCode, index); });\n    return value;\n  }\n  return replaceText(value, clusterCode, index);\n}\nfunction parseOptions(row){\n  if(Array.isArray(row.options) && row.options.length) return row.options.filter(function(item){ return item && item.value !== undefined && item.value !== null && item.value !== ''; }).map(function(item){ return { label: item.label || String(item.value), value: item.value }; });\n  return String(row.optionsText || '').split(/\\r?\\n|,/).map(function(line){\n    var text = line.trim();\n    if(!text) return null;\n    var index = text.indexOf('=');\n    if(index < 0) return { label: text, value: text };\n    var label = text.substring(0, index).trim();\n    var value = text.substring(index + 1).trim();\n    return value ? { label: label || value, value: value } : null;\n  }).filter(Boolean);\n}\nfunction normalizeRuntimeParams(rows){\n  return (rows || []).filter(function(item){ return item && item.key; }).map(function(item){\n    var row = clone(item);\n    row.key = String(row.key).trim();\n    row.label = row.label || row.key;\n    row.valueType = (row.valueType || 'STRING').toUpperCase();\n    row.enumEnabled = row.enumEnabled === true || String(row.enumEnabled || '').toLowerCase() === 'true' || String(row.controlType || '').toUpperCase() === 'SELECT';\n    if(row.valueType === 'BOOLEAN') row.enumEnabled = false;\n    row.defaultValue = parseValue(row.defaultValue, row.valueType);\n    row.required = !!row.required;\n    row.options = row.enumEnabled ? parseOptions(row) : [];\n    delete row.controlType;\n    delete row.optionsText;\n    return compact(row);\n  });\n}\nfunction bindingFromParam(param){\n  return compact({\n    key: param.key,\n    label: param.label || param.key,\n    valueType: param.valueType || 'STRING',\n    defaultValue: param.defaultValue,\n    bindType: 'ENV',\n    bindTarget: param.key,\n    required: !!param.required,\n    description: param.description\n  });\n}\nfunction putDefault(defaults, param){\n  if(param && param.key && param.defaultValue !== undefined && param.defaultValue !== null && param.defaultValue !== '') defaults[param.key] = param.defaultValue;\n}\nfunction applyEnvRows(node){\n  var env = node.env && typeof node.env === 'object' ? clone(node.env) : {};\n  (node.envRows || []).forEach(function(row){\n    if(row && row.key) env[row.key] = row.value === undefined || row.value === null ? '' : String(row.value);\n  });\n  if(Object.keys(env).length) node.env = env;\n  else delete node.env;\n  delete node.envRows;\n  delete node.envJson;\n}\nfunction applyParamBindings(node, runtimeParams, runtimeParamMap, defaults){\n  var bindings = {};\n  var rawKeys = Array.isArray(node.usedParamKeys) ? node.usedParamKeys : splitIds(node.usedParamKeys);\n  var keys = rawKeys.filter(function(key){ return key; });\n  if(!keys.length && node.autoBindParams === true) keys = runtimeParams.map(function(param){ return param.key; });\n  keys.forEach(function(key){\n    var param = runtimeParamMap[key] || { key: key, label: key, valueType: 'STRING' };\n    bindings[key] = bindingFromParam(param);\n    putDefault(defaults, param);\n  });\n  (node.paramBindings || []).forEach(function(item){\n    if(!item || !item.key) return;\n    var param = clone(item);\n    param.valueType = param.valueType || 'STRING';\n    param.defaultValue = parseValue(param.defaultValue, param.valueType);\n    param.bindType = (param.bindType || 'ENV').toUpperCase();\n    if(param.bindType === 'ENV') param.bindTarget = param.bindTarget || param.key;\n    bindings[param.key] = compact(param);\n    putDefault(defaults, param);\n  });\n  node.paramBindings = Object.keys(bindings).map(function(key){ return bindings[key]; });\n  delete node.usedParamKeys;\n  delete node.autoBindParams;\n}\nfunction expandRefs(expansionMap, id){\n  return expansionMap[id] || [{ id: id, clusterCode: '' }];\n}\nfunction pushEdge(edges, seen, from, to, dataKey){\n  if(!from || !to || from === to) return;\n  var key = from + '->' + to + '#' + (dataKey || '');\n  if(seen[key]) return;\n  seen[key] = true;\n  edges.push(compact({ from: from, to: to, dataKey: dataKey }));\n}\nfunction expandEdges(logicalEdges, expansionMap){\n  var edges = [];\n  var seen = {};\n  (logicalEdges || []).forEach(function(edge){\n    var froms = expandRefs(expansionMap, edge.from);\n    var tos = expandRefs(expansionMap, edge.to);\n    tos.forEach(function(to){\n      var matched = froms.filter(function(from){ return from.clusterCode && to.clusterCode && from.clusterCode === to.clusterCode; });\n      var sources = matched.length ? matched : froms;\n      sources.forEach(function(from){ pushEdge(edges, seen, from.id, to.id, edge.dataKey); });\n    });\n  });\n  return edges;\n}\nfunction expandedIds(expansionMap, value){\n  var ids = [];\n  splitIds(value).forEach(function(id){\n    expandRefs(expansionMap, id).forEach(function(ref){ ids.push(ref.id); });\n  });\n  return ids;\n}\nfunction deriveLoopNodes(startValue, endValue, edges, nodes){\n  var starts = splitIds(startValue);\n  var ends = splitIds(endValue);\n  if(!starts.length || !ends.length) return [];\n  var ids = (nodes || []).map(function(n){ return n.id; }).filter(Boolean);\n  var next = {};\n  var prev = {};\n  ids.forEach(function(id){ next[id] = []; prev[id] = []; });\n  (edges || []).forEach(function(e){\n    if(next[e.from]) next[e.from].push(e.to);\n    if(prev[e.to]) prev[e.to].push(e.from);\n  });\n  var reach = {};\n  function walkForward(id){ if(reach[id]) return; reach[id] = true; (next[id] || []).forEach(walkForward); }\n  starts.forEach(walkForward);\n  var canEnd = {};\n  function walkBack(id){ if(canEnd[id]) return; canEnd[id] = true; (prev[id] || []).forEach(walkBack); }\n  ends.forEach(walkBack);\n  var selected = {};\n  ids.forEach(function(id){ if(reach[id] && canEnd[id]) selected[id] = true; });\n  var indegree = {};\n  ids.forEach(function(id){ if(selected[id]) indegree[id] = 0; });\n  (edges || []).forEach(function(e){ if(selected[e.from] && selected[e.to]) indegree[e.to] = (indegree[e.to] || 0) + 1; });\n  var queue = ids.filter(function(id){ return selected[id] && indegree[id] === 0; });\n  var ordered = [];\n  while(queue.length){\n    var id = queue.shift();\n    ordered.push(id);\n    (next[id] || []).forEach(function(to){\n      if(!selected[to]) return;\n      indegree[to] -= 1;\n      if(indegree[to] === 0) queue.push(to);\n    });\n  }\n  return ordered;\n}\nvar runtimeParams = normalizeRuntimeParams(api.data.runtimeParams);\nvar runtimeParamMap = {};\nvar defaults = {};\nruntimeParams.forEach(function(param){ runtimeParamMap[param.key] = param; putDefault(defaults, param); });\nvar expansionMap = {};\nvar expandedNodes = [];\n(api.data.nodes || []).forEach(function(rawNode){\n  var selectedClusters = Array.isArray(rawNode.expandClusterCodes) ? rawNode.expandClusterCodes.filter(function(code){ return code; }) : [];\n  var base = clone(rawNode);\n  base.type = 'JOB';\n  delete base.expandBy;\n  delete base.expandClusterCodes;\n  applyEnvRows(base);\n  applyParamBindings(base, runtimeParams, runtimeParamMap, defaults);\n  if(base.target === 'EDGE' && selectedClusters.length > 1){\n    expansionMap[base.id] = [];\n    selectedClusters.forEach(function(clusterCode, index){\n      var node = replacePlaceholders(clone(base), clusterCode, index + 1);\n      var suffix = safePart(clusterCode) || ('edge-' + (index + 1));\n      node.id = base.id + '-' + suffix;\n      node.name = (base.name || base.id) + ' @ ' + clusterCode;\n      node.clusterCode = clusterCode;\n      node.clusterIndex = index + 1;\n      node.globalIndex = index + 1;\n      node.target = 'EDGE';\n      node.type = 'JOB';\n      expansionMap[base.id].push({ id: node.id, clusterCode: clusterCode });\n      expandedNodes.push(compact(node));\n    });\n  } else {\n    var clusterCode = base.target === 'EDGE' && selectedClusters.length === 1 ? selectedClusters[0] : base.clusterCode;\n    var originalId = base.id;\n    var node = replacePlaceholders(base, clusterCode || '', 1);\n    if(base.target === 'EDGE' && selectedClusters.length === 1){\n      node.clusterCode = selectedClusters[0];\n      node.clusterIndex = 1;\n      node.globalIndex = 1;\n    }\n    expansionMap[originalId] = [{ id: node.id, clusterCode: node.clusterCode || '' }];\n    expandedNodes.push(compact(node));\n  }\n});\nvar logicalEdges = [];\n(api.data.dependencyRows || []).forEach(function(row){\n  if(!row || !row.nodeId) return;\n  splitIds(row.dependsOn).forEach(function(dep){\n    logicalEdges.push(compact({ from: dep, to: row.nodeId, dataKey: row.dataKey }));\n  });\n});\nvar edges = expandEdges(logicalEdges, expansionMap);\napi.data.nodes = expandedNodes;\napi.data.edges = edges;\napi.data.loops = (api.data.loopRows || []).filter(function(row){ return row && row.id && row.startNode && row.endNode && row.countParam; }).map(function(row){\n  defaults[row.countParam] = parseValue(row.countDefault, row.countValueType || 'NUMBER');\n  var startIds = expandedIds(expansionMap, row.startNode);\n  var endIds = expandedIds(expansionMap, row.endNode);\n  var nodeIds = deriveLoopNodes(startIds.join(','), endIds.join(','), edges, api.data.nodes);\n  if(!nodeIds.length){\n    var seenLoopNode = {};\n    nodeIds = [];\n    startIds.concat(endIds).forEach(function(id){\n      if(id && !seenLoopNode[id]){\n        seenLoopNode[id] = true;\n        nodeIds.push(id);\n      }\n    });\n  }\n  return compact({\n    id: row.id,\n    countParam: row.countParam,\n    start: 1,\n    nodeIds: nodeIds,\n    nextFrom: endIds[0] || nodeIds[nodeIds.length - 1],\n    dataKey: row.dataKey\n  });\n});\napi.data.runtimeParams = runtimeParams;\napi.data.defaultParams = defaults;\napi.data.modelType = api.data.modelType || 'MIXED';\napi.data.policy = { runtime: 'K8S_MULTI', timeoutSeconds: Number(api.data.timeoutSeconds || 1800) };\napi.data.splitRule = { ruleName: (api.data.templateName || api.data.templateCode || 'flow') + ' split rule', ruleType: 'MIXED_DAG', description: api.data.description || '', params: {} };\ndelete api.data.dependencyRows;\ndelete api.data.loopRows;\ndelete api.data.parallelRows;\ndelete api.data.runtime;\ndelete api.data.timeoutSeconds;\n\nreturn api;",
+                        "adaptor": "function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nvar data = payload.data || {}; var rows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ rows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskTypeText: flowNodeTypeText(task.taskType), executor: task.executor, parallelGroup: task.parallelGroup ? '\\u662f' : '\\u5426', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = rows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
                       },
                       "body": [
                         {
@@ -79,8 +81,8 @@
                               "label": "子任务名称"
                             },
                             {
-                              "name": "taskType",
-                              "label": "执行方式",
+                              "name": "taskTypeText",
+                               "label": "节点执行类型",
                               "width": 120
                             },
                             {
@@ -105,7 +107,7 @@
                             },
                             {
                               "name": "expandedTasks",
-                              "label": "展开结果"
+                           "label": "展开实例"
                             }
                           ]
                         }
@@ -143,8 +145,7 @@
                                     "type": "input-text",
                                     "name": "templateCode",
                                     "label": "模板编码",
-                                    "required": true,
-                                    "placeholder": "fedavg-flow-custom"
+                                     "required": true
                                   }
                                 },
                                 {
@@ -153,20 +154,10 @@
                                     "type": "input-text",
                                     "name": "templateName",
                                     "label": "模板名称",
-                                    "required": true,
-                                    "placeholder": "通用流任务编排模板"
+                                     "required": true
                                   }
-                                },
-                                {
-                                  "md": 4,
-                                  "body": {
-                                    "type": "input-text",
-                                    "name": "taskType",
-                                    "label": "任务类型",
-                                    "placeholder": "FEDERATED_LEARNING_FEDAVG"
-                                  }
-                                }
-                              ]
+                                 }
+                               ]
                             },
                             {
                               "type": "hidden",
@@ -178,35 +169,38 @@
                               "name": "description",
                               "label": "描述",
                               "minRows": 2,
-                              "maxRows": 4
-                            }
-                          ]
-                        },
-                        {
-                          "type": "fieldset",
-                          "title": "运行配置",
-                          "body": [
+                               "maxRows": 4
+                            },
                             {
-                              "type": "grid",
-                              "columns": [
+                              "type": "combo",
+                              "name": "resultDisplay",
+                               "label": "扩展结果展示",
+                              "multiple": false,
+                              "multiLine": true,
+                              "items": [
                                 {
-                                  "md": 4,
-                                  "body": {
-                                    "type": "input-number",
-                                    "name": "timeoutSeconds",
-                                    "label": "超时(秒)",
-                                    "min": 1
-                                  }
+                                  "type": "switch",
+                                  "name": "enabled",
+                                   "label": "启用扩展结果采集"
                                 },
                                 {
-                                  "md": 4,
-                                  "body": {
-                                    "type": "switch",
-                                    "name": "autoCleanup",
-                                    "label": "完成后释放资源"
-                                  }
+                                  "type": "select",
+                                  "name": "type",
+                                   "label": "展示类型",
+                                  "value": "LINE",
+                                  "options": [
+                                    {
+                                      "label": "折线图",
+                                      "value": "LINE"
+                                    },
+                                    {
+                                      "label": "文本结果",
+                                      "value": "TEXT"
+                                    }
+                                  ]
                                 }
-                              ]
+                              ],
+                               "description": "任务镜像写入标准结果文件后，系统会按照模板配置解析并展示结果。未启用该功能时，系统仅展示通用运行指标。"
                             }
                           ]
                         },
@@ -215,89 +209,134 @@
                           "title": "运行参数",
                           "body": [
                             {
-                              "type": "input-table",
+                              "type": "combo",
                               "name": "runtimeParams",
                               "label": false,
+                              "multiple": true,
                               "addable": true,
                               "removable": true,
-                              "columns": [
+                              "draggable": true,
+                              "multiLine": true,
+                              "items": [
                                 {
-                                  "name": "key",
-                                  "label": "参数名",
-                                  "type": "input-text",
-                                  "required": true,
-                                  "placeholder": "DATASET"
-                                },
-                                {
-                                  "name": "label",
-                                  "label": "显示名",
-                                  "type": "input-text",
-                                  "placeholder": "数据集"
-                                },
-                                {
-                                  "name": "valueType",
-                                  "label": "类型",
-                                  "type": "select",
-                                  "value": "STRING",
-                                  "options": [
+                                  "type": "grid",
+                                  "className": "m-b-sm",
+                                  "columns": [
                                     {
-                                      "label": "文本",
-                                      "value": "STRING"
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "key",
+                                        "label": "参数标识",
+                                        "required": true
+                                      }
                                     },
                                     {
-                                      "label": "数字",
-                                      "value": "NUMBER"
+                                      "md": 3,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "label",
+                                        "label": "参数名称"
+                                      }
                                     },
                                     {
-                                      "label": "布尔",
-                                      "value": "BOOLEAN"
+                                      "md": 6,
+                                      "body": {
+                                        "type": "input-text",
+                                        "name": "description",
+                                        "label": "参数说明"
+                                      }
                                     }
                                   ]
                                 },
                                 {
-                                  "name": "controlType",
-                                  "label": "填写方式",
-                                  "type": "select",
-                                  "value": "INPUT",
-                                  "options": [
+                                  "type": "grid",
+                                  "className": "m-b-sm",
+                                  "columns": [
                                     {
-                                      "label": "手动填写",
-                                      "value": "INPUT"
+                                      "md": 3,
+                                      "body": {
+                                        "type": "select",
+                                        "name": "valueType",
+                                        "label": "数据类型",
+                                        "value": "STRING",
+                                        "options": [
+                                          {
+                                            "label": "STRING",
+                                            "value": "STRING"
+                                          },
+                                          {
+                                            "label": "NUMBER",
+                                            "value": "NUMBER"
+                                          },
+                                          {
+                                            "label": "BOOLEAN",
+                                            "value": "BOOLEAN"
+                                          }
+                                        ]
+                                      }
                                     },
                                     {
-                                      "label": "下拉选择",
-                                      "value": "SELECT"
+                                      "md": 2,
+                                      "body": {
+                                        "type": "switch",
+                                        "name": "enumEnabled",
+                                        "label": "枚举约束",
+                                        "value": false,
+                                        "visibleOn": "this.valueType !== 'BOOLEAN'"
+                                      }
+                                    },
+                                    {
+                                      "md": 4,
+                                      "body": [
+                                        {
+                                          "type": "input-text",
+                                          "name": "defaultValue",
+                                          "label": "默认值",
+                                          "visibleOn": "this.valueType === 'STRING'"
+                                        },
+                                        {
+                                          "type": "input-number",
+                                          "name": "defaultValue",
+                                          "label": "默认值",
+                                          "visibleOn": "this.valueType === 'NUMBER'"
+                                        },
+                                        {
+                                          "type": "switch",
+                                          "name": "defaultValue",
+                                          "label": "默认值",
+                                          "visibleOn": "this.valueType === 'BOOLEAN'"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "md": 3,
+                                      "body": {
+                                        "type": "switch",
+                                        "name": "required",
+                                        "label": "运行时必填"
+                                      }
                                     }
                                   ]
                                 },
                                 {
-                                  "name": "optionsText",
-                                  "label": "候选项",
-                                  "type": "textarea",
-                                  "minRows": 1,
-                                  "maxRows": 4,
-                                  "visibleOn": "this.controlType === 'SELECT'",
-                                  "placeholder": "MNIST=mnist\\nCIFAR10=cifar10"
-                                },
-                                {
-                                  "name": "defaultValue",
-                                  "label": "默认值",
-                                  "type": "textarea",
-                                  "minRows": 1,
-                                  "maxRows": 2
-                                },
-                                {
-                                  "name": "required",
-                                  "label": "必填",
-                                  "type": "switch"
-                                },
-                                {
-                                  "name": "description",
-                                  "label": "说明",
-                                  "type": "input-text"
+                                  "type": "combo",
+                                  "name": "options",
+                                  "label": "枚举候选值",
+                                  "multiple": true,
+                                  "addable": true,
+                                  "removable": true,
+                                  "minLength": 1,
+                                  "visibleOn": "this.enumEnabled",
+                                  "items": {
+                                    "type": "input-text",
+                                    "name": "value",
+                                     "label": false
+                                  },
+                                  "description": "启用枚举约束后，运行参数只能取候选值中的一个。"
                                 }
                               ],
-                              "description": "定义任务运行时参数、填写方式和候选项；下拉候选项每行填写“显示名=实际值”。"
+                              "description": "用于定义创建流任务时可配置的运行参数及其取值规则。"
                             }
                           ]
                         }
@@ -330,8 +369,7 @@
                                         "type": "input-text",
                                         "name": "id",
                                         "label": "子任务 ID",
-                                        "required": true,
-                                        "placeholder": "train-r1"
+                                         "required": true
                                       }
                                     },
                                     {
@@ -346,11 +384,17 @@
                                     {
                                       "md": 5,
                                       "body": {
-                                        "type": "input-text",
+                                        "type": "select",
                                         "name": "image",
                                         "label": "镜像",
-                                        "placeholder": "fedavg-client-train",
-                                        "required": true
+                                        "required": true,
+                                        "searchable": true,
+                                        "clearable": true,
+                                        "source": {
+                                          "method": "get",
+                                          "url": "${API_HOST}/image/options",
+                                          "adaptor": "var values = Array.isArray(payload.data) ? payload.data : []; var options = values.map(function(value){ var image = String(value || '').trim(); return image ? { label: image, value: image } : null; }).filter(Boolean); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: options } };"
+                                        }
                                       }
                                     }
                                   ]
@@ -369,7 +413,7 @@
                                       "body": {
                                         "type": "select",
                                         "name": "target",
-                                        "label": "运行位置",
+                                         "label": "执行位置",
                                         "value": "EDGE",
                                         "options": [
                                           {
@@ -422,7 +466,7 @@
                                           "url": "${API_HOST}/datastream/flow/template/cluster/options?target=EDGE",
                                           "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: payload.data || [] } };"
                                         },
-                                        "description": "选择多个边缘云时，保存/预览会自动展开为多个普通 Job 节点；依赖关系会同步映射到展开后的节点。"
+                                        "description": "选择多个边缘云时，系统会在保存模板或预览执行计划时自动展开为多个普通 Job 节点。依赖关系会同步映射到展开后的节点。"
                                       }
                                     },
                                     {
@@ -440,8 +484,7 @@
                                         "type": "input-number",
                                         "name": "replicas",
                                         "label": "副本数",
-                                        "min": 1,
-                                        "placeholder": "默认 1"
+                                         "min": 1
                                       }
                                     }
                                   ]
@@ -450,59 +493,8 @@
                             },
                             {
                               "type": "fieldset",
-                              "title": "服务与数据",
+                              "title": "数据输入",
                               "body": [
-                                {
-                                  "type": "grid",
-                                  "columns": [
-                                    {
-                                      "md": 3,
-                                      "body": {
-                                        "type": "input-text",
-                                        "name": "serviceName",
-                                        "label": "Service 名称",
-                                        "placeholder": "可为空"
-                                      }
-                                    },
-                                    {
-                                      "md": 3,
-                                      "body": {
-                                        "type": "input-number",
-                                        "name": "servicePort",
-                                        "label": "端口",
-                                        "value": 8080
-                                      }
-                                    },
-                                    {
-                                      "md": 3,
-                                      "body": {
-                                        "type": "select",
-                                        "name": "serviceType",
-                                        "label": "服务类型",
-                                        "value": "ClusterIP",
-                                        "options": [
-                                          {
-                                            "label": "ClusterIP",
-                                            "value": "ClusterIP"
-                                          },
-                                          {
-                                            "label": "NodePort",
-                                            "value": "NodePort"
-                                          }
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "md": 3,
-                                      "body": {
-                                        "type": "input-number",
-                                        "name": "nodePort",
-                                        "label": "NodePort",
-                                        "visibleOn": "this.serviceType === 'NodePort'"
-                                      }
-                                    }
-                                  ]
-                                },
                                 {
                                   "type": "grid",
                                   "columns": [
@@ -511,8 +503,8 @@
                                       "body": {
                                         "type": "switch",
                                         "name": "needDataset",
-                                        "label": "需要数据集",
-                                        "description": "开启后，后端按任务选择的数据集和子任务所在边缘集群，自动注入该边缘云唯一数据分片的 DATA_PATH。"
+                                         "label": "启用数据集输入",
+                                         "description": "启用后，系统根据运行参数和执行位置自动注入数据输入路径。"
                                       }
                                     },
                                     {
@@ -520,30 +512,10 @@
                                       "body": {
                                         "type": "input-text",
                                         "name": "datasetPathEnv",
-                                        "label": "路径环境变量",
+                                         "label": "数据路径环境变量",
                                         "value": "DATA_PATH",
                                         "visibleOn": "this.needDataset",
-                                        "description": "数据集路径注入到哪个环境变量，默认 DATA_PATH。"
-                                      }
-                                    },
-                                    {
-                                      "md": 6,
-                                      "body": {
-                                        "type": "input-text",
-                                        "name": "inputPath",
-                                        "label": "中间数据输入路径",
-                                        "placeholder": "minio://${MINIO_BUCKET}/${taskName}/global/round-{{prevRound}}/model.bin",
-                                        "description": "只表示上游子任务产出的中间数据输入路径，可引用 ${参数名}、{{round}}、{{prevRound}}。"
-                                      }
-                                    },
-                                    {
-                                      "md": 6,
-                                      "body": {
-                                        "type": "input-text",
-                                        "name": "outputPath",
-                                        "label": "中间数据输出路径",
-                                        "placeholder": "minio://${MINIO_BUCKET}/${taskName}/updates/round-{{round}}/client-{{globalIndex}}.bin",
-                                        "description": "只表示本子任务产出的中间数据输出路径，可引用 ${参数名}、{{round}}。"
+                                         "description": "指定数据输入路径注入的环境变量，默认值为 DATA_PATH。"
                                       }
                                     }
                                   ]
@@ -552,7 +524,7 @@
                             },
                             {
                               "type": "fieldset",
-                              "title": "节点环境变量",
+                               "title": "节点运行环境变量",
                               "body": [
                                 {
                                   "type": "input-table",
@@ -565,17 +537,15 @@
                                       "name": "key",
                                       "label": "变量名",
                                       "type": "input-text",
-                                      "required": true,
-                                      "placeholder": "ROUND"
+                                       "required": true
                                     },
                                     {
                                       "name": "value",
                                       "label": "变量值",
-                                      "type": "input-text",
-                                      "placeholder": "{{round}}"
+                                       "type": "input-text"
                                     }
                                   ],
-                                  "description": "支持 ${PARAM} 引用运行参数；循环中支持 {{round}}、{{prevRound}}；多边缘云展开时支持 {{clusterCode}}、{{clusterIndex}}、{{globalIndex}}。"
+                                  "description": "这里只填写该子任务的固定参数。任务运行参数请通过参数绑定配置，系统运行变量由后端自动注入。"
                                 }
                               ]
                             },
@@ -587,16 +557,15 @@
                                   "type": "switch",
                                   "name": "autoBindParams",
                                   "label": "自动注入全部运行参数",
-                                  "value": true,
-                                  "description": "开启后，模板运行参数会按同名 ENV 注入该子任务容器。"
+                                  "value": false,
+                                  "description": "开启后，系统会自动绑定全部运行参数。通常建议在参数绑定中显式选择需要使用的参数。"
                                 },
                                 {
                                   "type": "input-text",
                                   "name": "usedParamKeys",
                                   "label": "仅注入这些参数",
-                                  "placeholder": "DATASET,MODEL,LOCAL_EPOCHS",
                                   "visibleOn": "this.autoBindParams === false",
-                                  "description": "留空表示不注入运行参数；填写多个参数名时用英文逗号分隔。"
+                                  "description": "留空表示不注入运行参数。填写多个参数名时，请使用英文逗号分隔。"
                                 }
                               ]
                             }
@@ -622,20 +591,17 @@
                                   "name": "nodeId",
                                   "label": "子任务",
                                   "type": "input-text",
-                                  "required": true,
-                                  "placeholder": "aggregate-r1"
+                                   "required": true
                                 },
                                 {
                                   "name": "dependsOn",
                                   "label": "前置任务",
-                                  "type": "input-text",
-                                  "placeholder": "client-train-r1"
+                                   "type": "input-text"
                                 },
                                 {
-                                  "name": "dataKey",
-                                  "label": "依赖说明",
-                                  "type": "input-text",
-                                  "placeholder": "client-updates"
+                                   "name": "dataKey",
+                                   "label": "依赖数据标识",
+                                   "type": "input-text"
                                 }
                               ]
                             }
@@ -654,55 +620,50 @@
                               "columns": [
                                 {
                                   "name": "id",
-                                  "label": "循环 ID",
-                                  "type": "input-text",
-                                  "placeholder": "round-loop"
+                                   "label": "循环标识",
+                                   "type": "input-text"
                                 },
                                 {
                                   "name": "startNode",
-                                  "label": "起始任务",
-                                  "type": "input-text",
-                                  "placeholder": "client-train-r1"
+                                   "label": "起始节点",
+                                   "type": "input-text"
                                 },
                                 {
                                   "name": "endNode",
-                                  "label": "结束任务",
-                                  "type": "input-text",
-                                  "placeholder": "aggregate-r1"
+                                   "label": "结束节点",
+                                   "type": "input-text"
                                 },
                                 {
                                   "name": "countParam",
                                   "label": "循环次数参数",
-                                  "type": "input-text",
-                                  "placeholder": "ROUNDS"
+                                   "type": "input-text"
                                 },
                                 {
                                   "name": "countDefault",
-                                  "label": "默认次数",
+                                   "label": "默认循环次数",
                                   "type": "input-number",
                                   "value": 3
                                 },
                                 {
                                   "name": "countValueType",
-                                  "label": "参数类型",
+                                   "label": "计数参数类型",
                                   "type": "select",
                                   "value": "NUMBER",
                                   "options": [
                                     {
-                                      "label": "数字",
+                                      "label": "NUMBER",
                                       "value": "NUMBER"
                                     },
                                     {
-                                      "label": "文本",
+                                      "label": "STRING",
                                       "value": "STRING"
                                     }
                                   ]
                                 },
                                 {
-                                  "name": "dataKey",
-                                  "label": "跨轮说明",
-                                  "type": "input-text",
-                                  "placeholder": "next-round"
+                                   "name": "dataKey",
+                                   "label": "跨轮数据标识",
+                                  "type": "input-text"
                                 }
                               ]
                             }
@@ -728,12 +689,7 @@
           "label": "模板名称"
         },
         {
-          "name": "taskType",
-          "label": "任务类型",
-          "width": 180
-        },
-        {
-          "name": "modelType",
+          "name": "modelTypeText",
           "label": "流程形态",
           "width": 100
         },
@@ -744,7 +700,7 @@
           "buttons": [
             {
               "type": "button",
-              "label": "\u7ed3\u6784\u5c55\u793a",
+              "label": "结构展示",
               "level": "link",
               "actionType": "url",
               "url": "/flow/template/view?templateCode=${templateCode}"
@@ -762,7 +718,7 @@
                   "api": {
                     "method": "get",
                     "url": "${API_HOST}/datastream/flow/template/preview?templateCode=${templateCode}",
-                    "adaptor": "var data = payload.data || {}; var rows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ rows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = rows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                    "adaptor": "function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nvar data = payload.data || {}; var rows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ rows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskTypeText: flowNodeTypeText(task.taskType), executor: task.executor, parallelGroup: task.parallelGroup ? '\\u662f' : '\\u5426', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = rows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
                   },
                   "body": [
                     {
@@ -784,8 +740,8 @@
                           "label": "子任务名称"
                         },
                         {
-                          "name": "taskType",
-                          "label": "执行方式",
+                          "name": "taskTypeText",
+                           "label": "节点执行类型",
                           "width": 120
                         },
                         {
@@ -810,7 +766,7 @@
                         },
                         {
                           "name": "expandedTasks",
-                          "label": "展开结果"
+                           "label": "展开实例"
                         }
                       ]
                     }

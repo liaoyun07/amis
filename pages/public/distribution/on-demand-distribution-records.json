@@ -1,7 +1,7 @@
 {
   "type": "page",
   "name": "on-demand-distribution-records",
-  "title": "应用分发记录",
+  "title": "\u5e94\u7528\u5206\u53d1\u4e0e\u540c\u6b65\u8bb0\u5f55",
   "body": [
     {
       "type": "crud",
@@ -10,13 +10,13 @@
         "title": "",
         "mode": "horizontal",
         "wrapWithPanel": false,
-        "submitText": "查看",
+        "submitText": "\u67e5\u8be2",
         "body": [
           {
             "type": "select",
             "name": "clusterCode",
-            "label": "目标边缘云",
-            "placeholder": "全部",
+            "label": "\u76ee\u6807\u8fb9\u7f18\u4e91",
+            "placeholder": "\u5168\u90e8",
             "clearable": true,
             "searchable": false,
             "submitOnChange": true,
@@ -28,49 +28,53 @@
         ]
       },
       "headerToolbar": [
-        { "type": "reload", "align": "left", "icon": "iconfont icon-refresh", "label": "刷新", "level": "primary" },
+        { "type": "reload", "align": "left", "icon": "iconfont icon-refresh", "label": "\u5237\u65b0", "level": "primary" },
         { "type": "columns-toggler", "align": "right", "icon": "fas fa-cog", "overlay": true }
       ],
       "api": {
         "url": "${API_HOST}/datastream/distribution/on-demand-records",
         "method": "get",
         "data": {
-          "clusterCode": "${clusterCode}"
+          "clusterCode": "${clusterCode}",
+          "page": "${page}",
+          "perPage": "${perPage}"
         },
-        "adaptor": "var items = payload.data || [];\nfunction policyName(v){ if(v === 'app_catalog:on_demand') return '按需分发策略'; if(v === 'app_catalog:preload') return '启动前预分发策略'; if(v === 'app_catalog:broadcast') return '广播分发策略'; return v || '-'; }\nfunction triggerCondition(v){ if(v === 'Fallback to on-demand distribution when no application policy is configured') return '未配置应用分发策略，默认采用按需分发'; return v || '-'; }\nfunction triggerSource(v){ if(v === 'EDGE_EXECUTE') return '边缘任务执行'; if(v === 'TASK_START_PREWARM') return '任务启动前预分发'; return v || '-'; }\nfunction message(v){ if(v === 'Application copied from center Harbor to edge registry') return '已从中心镜像仓库复制到边缘镜像仓库'; if(v === 'Application already exists in edge registry, reused directly') return '边缘镜像仓库已存在该应用，直接复用'; if(v === 'Checking edge registry and preparing application') return '正在检查边缘镜像仓库并准备应用'; return v || '-'; }\nitems = items.map(function(item){ return {...item, policyNameText: policyName(item.policyName), triggerConditionText: triggerCondition(item.triggerCondition), triggerSourceText: triggerSource(item.triggerSource), messageText: message(item.message)}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
+        "adaptor": "var body = payload.data || {}; var items = Array.isArray(body) ? body : (body.items || []); var total = Array.isArray(body) ? items.length : (body.total || 0); function policyName(v){ if(v === 'app_catalog:on_demand') return '\u6309\u9700\u5206\u53d1\u7b56\u7565'; if(v === 'app_catalog:policy_publish' || v === 'app_catalog:preload' || v === 'app_catalog:broadcast') return '\u7248\u672c\u66f4\u65b0\u540c\u6b65\u7b56\u7565'; if(v === 'app_catalog:version_update') return '\u7248\u672c\u66f4\u65b0\u540c\u6b65\u7b56\u7565'; return v || '-'; } function triggerCondition(v){ if(v === 'Fallback to on-demand distribution when no application policy is configured') return '\u672a\u914d\u7f6e\u5e94\u7528\u5206\u53d1\u7b56\u7565\uff0c\u9ed8\u8ba4\u91c7\u7528\u6309\u9700\u5206\u53d1'; if(v && v.indexOf('registered by') >= 0) return '\u5e94\u7528\u5df2\u767b\u8bb0\uff0c\u6267\u884c\u8fb9\u7f18\u4efb\u52a1\u65f6\u6309\u9700\u5206\u53d1'; if(v && v.indexOf('registered from') >= 0) return '\u5e94\u7528\u5df2\u767b\u8bb0\uff0c\u6267\u884c\u8fb9\u7f18\u4efb\u52a1\u65f6\u6309\u9700\u5206\u53d1'; return v || '-'; } function triggerSource(v){ if(v === 'EDGE_EXECUTE') return '\u8fb9\u7f18\u4efb\u52a1\u6267\u884c'; if(v === 'POLICY_PUBLISH') return '\u7b56\u7565\u53d1\u5e03'; if(v === 'VERSION_UPDATE') return '\u7248\u672c\u66f4\u65b0'; return v || '-'; } function message(v){ if(v === 'Application copied from center Harbor to edge registry') return '\u5df2\u4ece\u4e2d\u5fc3\u955c\u50cf\u4ed3\u5e93\u590d\u5236\u5230\u8fb9\u7f18\u955c\u50cf\u4ed3\u5e93'; if(v === 'Application already exists in edge registry, reused directly') return '\u8fb9\u7f18\u955c\u50cf\u4ed3\u5e93\u5df2\u5b58\u5728\u8be5\u5e94\u7528\uff0c\u76f4\u63a5\u590d\u7528'; if(v === 'Checking edge registry and preparing application') return '\u6b63\u5728\u68c0\u67e5\u8fb9\u7f18\u955c\u50cf\u4ed3\u5e93\u5e76\u51c6\u5907\u5e94\u7528'; return v || '-'; } items = items.map(function(item){ return {...item, policyNameText: policyName(item.policyName), triggerConditionText: triggerCondition(item.triggerCondition), triggerSourceText: triggerSource(item.triggerSource), messageText: message(item.message)}; }); return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items, total: total}};"
       },
+      "perPage": 20,
+      "perPageAvailable": [10, 20, 50],
       "columns": [
-        { "name": "policyNameText", "label": "分发策略", "align": "center" },
-        { "name": "triggerConditionText", "label": "触发条件", "align": "center" },
-        { "name": "triggerSourceText", "label": "触发来源", "align": "center" },
-        { "name": "flowTaskName", "label": "触发任务", "align": "center" },
-        { "name": "nodeName", "label": "触发子任务", "align": "center" },
-        { "name": "appName", "label": "应用", "align": "center" },
-        { "name": "version", "label": "版本", "align": "center" },
-        { "name": "targetCluster", "label": "目标边缘云", "align": "center" },
+        { "name": "policyNameText", "label": "\u5206\u53d1\u7b56\u7565", "align": "center" },
+        { "name": "triggerConditionText", "label": "\u89e6\u53d1\u6761\u4ef6", "align": "center" },
+        { "name": "triggerSourceText", "label": "\u89e6\u53d1\u6765\u6e90", "align": "center" },
+        { "name": "flowTaskName", "label": "\u89e6\u53d1\u4efb\u52a1", "align": "center" },
+        { "name": "nodeName", "label": "\u89e6\u53d1\u5b50\u4efb\u52a1", "align": "center" },
+        { "name": "appName", "label": "\u5e94\u7528", "align": "center" },
+        { "name": "version", "label": "\u7248\u672c", "align": "center" },
+        { "name": "targetCluster", "label": "\u76ee\u6807\u8fb9\u7f18\u4e91", "align": "center" },
         {
           "name": "status",
-          "label": "状态",
+          "label": "\u72b6\u6001",
           "type": "mapping",
           "map": {
-            "DISTRIBUTING": "<span class='label label-warning'>分发中</span>",
-            "SUCCEEDED": "<span class='label label-success'>分发成功</span>",
-            "REUSED": "<span class='label label-info'>已复用</span>",
-            "FAILED": "<span class='label label-danger'>分发失败</span>",
+            "DISTRIBUTING": "<span class='label label-warning'>\u5206\u53d1\u4e2d</span>",
+            "SUCCEEDED": "<span class='label label-success'>\u5206\u53d1\u6210\u529f</span>",
+            "REUSED": "<span class='label label-info'>\u5df2\u590d\u7528</span>",
+            "FAILED": "<span class='label label-danger'>\u5206\u53d1\u5931\u8d25</span>",
             "*": "<span class='label label-default'>${status}</span>"
           },
           "align": "center"
         },
-        { "name": "startedAt", "label": "触发时间", "align": "center" },
-        { "name": "finishedAt", "label": "完成时间", "align": "center" },
-        { "name": "durationMs", "label": "分发耗时(ms)", "align": "center" },
-        { "name": "sourceImage", "label": "中心云镜像", "align": "center", "breakpoint": "*" },
-        { "name": "targetImage", "label": "边缘云镜像", "align": "center", "breakpoint": "*" },
-        { "name": "messageText", "label": "说明", "align": "center", "breakpoint": "*" }
+        { "name": "startedAt", "label": "\u89e6\u53d1\u65f6\u95f4", "align": "center" },
+        { "name": "finishedAt", "label": "\u5b8c\u6210\u65f6\u95f4", "align": "center" },
+        { "name": "durationMs", "label": "\u5206\u53d1\u8017\u65f6(ms)", "align": "center" },
+        { "name": "sourceImage", "label": "\u4e2d\u5fc3\u4e91\u955c\u50cf", "align": "center", "breakpoint": "*" },
+        { "name": "targetImage", "label": "\u8fb9\u7f18\u4e91\u955c\u50cf", "align": "center", "breakpoint": "*" },
+        { "name": "messageText", "label": "\u8bf4\u660e", "align": "center", "breakpoint": "*" }
       ],
       "affixHeader": true,
       "columnsTogglable": "auto",
-      "placeholder": "暂无应用分发记录，启动边缘云流任务后会自动产生记录",
+      "placeholder": "\u6682\u65e0\u5e94\u7528\u5206\u53d1\u8bb0\u5f55",
       "tableClassName": "table-db table-striped"
     }
   ]

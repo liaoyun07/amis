@@ -4,12 +4,6 @@
   "title": "终端设备接入",
   "body": [
     {
-      "type": "alert",
-      "level": "info",
-      "showIcon": true,
-      "body": "终端模拟器以独立 Agent 形式持续上报心跳、上传第一数据，并周期性拉取边缘云下发的第二数据。"
-    },
-    {
       "type": "crud",
       "name": "terminal-device-list",
       "api": {
@@ -21,23 +15,24 @@
       "silentPolling": true,
       "headerToolbar": [
         {
-          "type": "button",
-          "label": "检测触发策略",
-          "level": "success",
-          "actionType": "ajax",
-          "api": {
-            "method": "post",
-            "url": "${API_HOST}/datastream/terminal/detect-now",
-            "adaptor": "return {...payload, status: payload.status === 200 ? 0 : payload.status, msg: (payload.data && payload.data.message) || payload.message};"
-          },
-          "reload": "terminal-downlink-list"
-        },
-        { "type": "reload", "label": "刷新", "level": "primary" }
+          "type": "reload",
+          "label": "刷新",
+          "level": "primary"
+        }
       ],
       "columns": [
-        { "name": "terminalCode", "label": "终端编号" },
-        { "name": "clusterCode", "label": "所属边缘云" },
-        { "name": "deviceType", "label": "设备类型" },
+        {
+          "name": "terminalCode",
+          "label": "终端编号"
+        },
+        {
+          "name": "clusterCode",
+          "label": "所属边缘云"
+        },
+        {
+          "name": "deviceType",
+          "label": "设备类型"
+        },
         {
           "name": "status",
           "label": "状态",
@@ -52,15 +47,42 @@
             "*": "${status}"
           }
         },
-        { "name": "cpuLoad", "label": "终端负载", "type": "tpl", "tpl": "${cpuLoad || 0}%" },
-        { "name": "batteryLevel", "label": "电量", "type": "tpl", "tpl": "${batteryLevel || 0}%" },
-        { "name": "sampleIntervalSeconds", "label": "采集周期", "type": "tpl", "tpl": "${sampleIntervalSeconds || '-'} 秒" },
-        { "name": "uploadCount", "label": "第一数据数" },
-        { "name": "resultCount", "label": "接收结果数" },
-        { "name": "lastHeartbeatAt", "label": "最近心跳" },
-        { "name": "lastUploadAt", "label": "最近数据" }
+        {
+          "name": "cpuLoad",
+          "label": "终端负载",
+          "type": "tpl",
+          "tpl": "${cpuLoad || 0}%"
+        },
+        {
+          "name": "batteryLevel",
+          "label": "电量",
+          "type": "tpl",
+          "tpl": "${batteryLevel || 0}%"
+        },
+        {
+          "name": "sampleIntervalSeconds",
+          "label": "采集周期",
+          "type": "tpl",
+          "tpl": "${sampleIntervalSeconds || '-'} 秒"
+        },
+        {
+          "name": "uploadCount",
+          "label": "第一数据数"
+        },
+        {
+          "name": "resultCount",
+          "label": "接收结果数"
+        },
+        {
+          "name": "lastHeartbeatAt",
+          "label": "最近心跳"
+        },
+        {
+          "name": "lastUploadAt",
+          "label": "最近数据"
+        }
       ],
-      "placeholder": "暂无终端设备，启动终端模拟器后会自动出现"
+      "placeholder": "暂无终端设备"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "type": "page",
-  "title": "流控制中心",
+  "title": "流任务运行监控",
   "body": [
     {
       "type": "crud",
@@ -82,7 +82,7 @@
           "buttons": [
             {
               "type": "button",
-              "label": "详情",
+              "label": "子任务详情",
               "level": "primary",
               "actionType": "dialog",
               "dialog": {
@@ -242,18 +242,24 @@
             },
             {
               "type": "button",
-              "label": "结果",
+              "label": "扩展结果展示",
               "level": "info",
               "actionType": "dialog",
               "dialog": {
-                "title": "Workflow 结果 - ${taskName}",
+                "title": "任务结果 - ${taskName}",
                 "size": "lg",
+                "data": {
+                  "taskName": "${taskName}"
+                },
+                "dataMergeMode": "override",
                 "body": {
                   "type": "service",
+                  "name": "task-result-service-${taskName}",
+                  "initFetch": true,
                   "api": {
                     "method": "get",
                     "url": "${API_HOST}/datastream/flow/task/result?taskName=${taskName}",
-                    "adaptor": "const data = payload.data || {};\nconst rows = data.metricRows || [];\nconst labels = rows.map(item => `Round ${item.round}`);\ndata.lossChart = { tooltip: { trigger: 'axis' }, grid: { left: 56, right: 24, bottom: 36, top: 36 }, xAxis: { type: 'category', boundaryGap: false, data: labels }, yAxis: { type: 'value', name: 'Loss', scale: true }, series: [{ name: 'Average Loss', type: 'line', smooth: true, symbolSize: 7, data: rows.map(item => item.avgLoss) }] };\ndata.accuracyChart = { tooltip: { trigger: 'axis' }, grid: { left: 56, right: 24, bottom: 36, top: 36 }, xAxis: { type: 'category', boundaryGap: false, data: labels }, yAxis: { type: 'value', name: 'Accuracy', min: 0, max: 1 }, series: [{ name: 'Average Accuracy', type: 'line', smooth: true, symbolSize: 7, data: rows.map(item => item.avgAccuracy) }] };\nconst summary = { status: data.status, message: data.message, plannedRounds: data.plannedRounds, completedRounds: data.completedRounds, currentRound: data.currentRound, finalModelPath: data.finalModelPath, finalModelObject: data.finalModelObject || null, artifactPrefix: data.artifactPrefix, artifactObjects: data.artifactObjects || [], metricRows: data.metricRows || [], artifactListError: data.artifactListError || null, finalModelError: data.finalModelError || null };\ndata.result = JSON.stringify(summary, null, 2);\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data };"
+                    "adaptor": "const data = payload.data || {};\nconst result = data.taskResult || null;\ndata.taskResultTypeText = !result ? '无' : (result.type === 'LINE' ? '折线图' : (result.type === 'TEXT' ? '文本' : result.type));\nif (result && result.type === 'LINE' && result.data) {\n  const series = (result.data.series || []).map(item => ({ name: item.name || item.key || '指标', type: 'line', smooth: true, symbolSize: 7, data: item.data || [] }));\n  data.lineChart = { tooltip: { trigger: 'axis' }, legend: { top: 8 }, grid: { left: 56, right: 24, bottom: 36, top: 42 }, xAxis: { type: 'category', boundaryGap: false, data: result.data.xAxis || [] }, yAxis: { type: 'value', scale: true }, series: series };\n}\ndata.resultText = result && result.type === 'TEXT' && result.data ? result.data.content : '';\ndata.resultJson = result ? JSON.stringify(result, null, 2) : '';\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
                   },
                   "body": [
                     {
@@ -263,80 +269,67 @@
                           "md": 4,
                           "body": {
                             "type": "tpl",
-                            "tpl": "<div class='b-a p-3'><div class='text-muted'>Status</div><h3>${status|default:-}</h3></div>"
+                            "tpl": "<div class='b-a p-3'><div class='text-muted'>任务状态</div><h3>${status|default:-}</h3></div>"
                           }
                         },
                         {
                           "md": 4,
                           "body": {
                             "type": "tpl",
-                            "tpl": "<div class='b-a p-3'><div class='text-muted'>Rounds</div><h3>${currentRound|default:0} / ${rounds|default:0}</h3></div>"
+                            "tpl": "<div class='b-a p-3'><div class='text-muted'>任务耗时</div><h3>${totalDurationMs|default:0} ms</h3></div>"
                           }
                         },
                         {
                           "md": 4,
                           "body": {
                             "type": "tpl",
-                            "tpl": "<div class='b-a p-3'><div class='text-muted'>Final Model</div><div style='word-break: break-all;'>${finalModelPath|default:-}</div></div>"
+                            "tpl": "<div class='b-a p-3'><div class='text-muted'>展示类型</div><h3>${taskResultTypeText|default:无}</h3></div>"
                           }
                         }
                       ]
                     },
                     {
                       "type": "divider",
-                      "title": "Loss"
+                      "title": "扩展结果",
+                      "visibleOn": "this.taskResult"
                     },
                     {
                       "type": "chart",
-                      "height": 280,
-                      "source": "${lossChart}",
-                      "placeholder": "No loss metrics"
-                    },
-                    {
-                      "type": "divider",
-                      "title": "Accuracy"
-                    },
-                    {
-                      "type": "chart",
-                      "height": 280,
-                      "source": "${accuracyChart}",
-                      "placeholder": "No accuracy metrics"
-                    },
-                    {
-                      "type": "table",
-                      "source": "${metricRows}",
-                      "placeholder": "No metric rows",
-                      "columns": [
-                        {
-                          "name": "round",
-                          "label": "Round"
-                        },
-                        {
-                          "name": "avgLoss",
-                          "label": "Avg Loss"
-                        },
-                        {
-                          "name": "avgAccuracy",
-                          "label": "Avg Accuracy"
-                        },
-                        {
-                          "name": "samples",
-                          "label": "Samples"
-                        },
-                        {
-                          "name": "clients",
-                          "label": "Clients",
-                          "type": "json"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "divider",
-                      "title": "Raw Result"
+                      "height": 320,
+                      "data": "${lineChart}",
+                      "config": {
+                        "tooltip": { "trigger": "axis" },
+                        "legend": { "top": 8 },
+                        "grid": { "left": 56, "right": 24, "bottom": 36, "top": 42 },
+                        "xAxis": { "type": "category", "boundaryGap": false },
+                        "yAxis": { "type": "value", "scale": true },
+                        "series": []
+                      },
+                      "trackExpression": "${lineChart}",
+                      "dataFilter": "config.xAxis.data = data.xAxis && data.xAxis.data ? data.xAxis.data : []; config.series = data.series || []; return config;",
+                      "replaceChartOption": true,
+                      "visibleOn": "this.taskResult && this.taskResult.type === 'LINE'",
+                      "placeholder": "暂无折线图结果"
                     },
                     {
                       "type": "tpl",
-                      "tpl": "<pre style='white-space: pre-wrap; max-height: 520px; overflow: auto;'>${result}</pre>"
+                      "visibleOn": "this.taskResult && this.taskResult.type === 'TEXT'",
+                      "tpl": "<pre style='white-space: pre-wrap; max-height: 520px; overflow: auto;'>${resultText|default:暂无文本结果}</pre>"
+                    },
+                    {
+                      "type": "tpl",
+                      "visibleOn": "!this.taskResult",
+                      "tpl": "<div class='text-muted p-3'>当前任务未配置扩展结果，或尚未生成标准结果文件。</div>"
+                    },
+                    {
+                      "type": "divider",
+                      "title": "结果原文",
+                      "visibleOn": "this.taskResult"
+                    },
+                    {
+                      "type": "tpl",
+                      "visibleOn": "this.taskResult",
+                      "tpl": "<pre style='white-space: pre-wrap; max-height: 320px; overflow: auto;'>${resultJson}</pre>"
                     }
                   ]
                 }

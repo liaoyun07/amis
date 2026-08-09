@@ -53,6 +53,13 @@
           "align": "center"
         },
         {
+          "name": "architecture",
+          "label": "\u8282\u70b9\u67b6\u6784",
+          "labelClassName": "font-bold",
+          "align": "center",
+          "remark": "\u8282\u70b9\u5b9e\u9645\u4e0a\u62a5\u7684\u8fd0\u884c\u67b6\u6784\uff0c\u4f8b\u5982 amd64 \u6216 arm64"
+        },
+        {
           "name": "creationTime",
           "label": "\u521b\u5efa\u65f6\u95f4",
           "labelClassName": "font-bold",

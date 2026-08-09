@@ -12,7 +12,7 @@
           "body": [
             {
               "type": "button",
-              "label": "创建镜像",
+              "label": "镜像上传与发布",
               "icon": "fas fa-plus",
               "size": "md",
               "level": "primary",
@@ -42,7 +42,7 @@
               "api": {
                 "url": "${API_HOST}/datastream/app-catalog/list",
                 "method": "get",
-                "adaptor": "var items = payload.data || [];\nfunction modeText(v){ if(v === 'on_demand') return '按需分发'; if(v === 'preload') return '启动前预分发'; if(v === 'broadcast') return '广播到全部边缘'; return v || '-'; }\nfunction scopeText(v){ if(v === 'participating') return '本次参与边缘'; if(v === 'all_edges') return '全部边缘'; if(v === 'explicit') return '指定边缘'; return v || '-'; }\nitems = items.map(function(item){ return {...item, dispatchModeText: modeText(item.dispatchMode), targetScopeText: scopeText(item.targetScope), centerImageText: item.centerImageReady ? '已存在' : '缺失', distributedEdgesText: item.distributedEdges || '-'}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
+                "adaptor": "var items = payload.data || [];\nfunction modeText(v){ if(v === 'on_demand') return '按需分发'; if(v === 'policy_publish' || v === 'preload' || v === 'broadcast') return '策略发布分发'; if(v === 'version_update') return '版本更新同步'; return v || '-'; }\nfunction scopeText(v){ if(v === 'participating') return '本次参与边缘'; if(v === 'all_edges') return '全部边缘'; if(v === 'explicit') return '指定边缘'; return v || '-'; }\nitems = items.map(function(item){ return {...item, dispatchModeText: modeText(item.dispatchMode), targetScopeText: scopeText(item.targetScope), centerImageText: item.centerImageReady ? '已存在' : '缺失', distributedEdgesText: item.distributedEdges || '-'}; });\nreturn {...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: {items: items}};"
               },
               "columns": [
                 {

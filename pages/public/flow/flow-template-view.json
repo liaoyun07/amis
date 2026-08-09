@@ -1,12 +1,12 @@
 {
   "type": "page",
   "name": "flow-template-view",
-  "title": "\u6d41\u4efb\u52a1\u6a21\u677f\u7ed3\u6784\u5c55\u793a",
+  "title": "流任务模板结构展示",
   "body": [
     {
       "type": "alert",
       "level": "warning",
-      "body": "\u672a\u83b7\u53d6\u5230\u6a21\u677f\u7f16\u7801\uff0c\u8bf7\u4ece\u6d41\u4efb\u52a1\u7f16\u6392\u4e2d\u5fc3\u7684\u201c\u7ed3\u6784\u5c55\u793a\u201d\u8fdb\u5165\u3002",
+      "body": "未获取到模板编码，请从流任务模板编排的“结构展示”进入。",
       "visibleOn": "!this.templateCode"
     },
     {
@@ -15,21 +15,16 @@
       "api": {
         "method": "get",
         "url": "${API_HOST}/datastream/flow/template/preview?templateCode=${templateCode}",
-        "adaptor": "var data = payload.data || {};\nfunction taskLocation(task, nodeMap){\n  var node = nodeMap[task.taskId] || {};\n  if(node.clusterCode) return node.clusterCode;\n  if(task.executor === 'EDGE') return '\u8fb9\u7f18\u4e91';\n  if(task.executor === 'CLOUD') return '\u4e2d\u5fc3\u4e91';\n  if(task.executor === 'TERMINAL') return '\u7aef\u8bbe\u5907';\n  return task.executor || '-';\n}\nfunction targetLabel(task, nodeMap){\n  var node = nodeMap[task.taskId] || {};\n  if(node.target === 'EDGE') return '\u8fb9\u7f18\u4e91';\n  if(node.target === 'CLOUD') return '\u4e2d\u5fc3\u4e91';\n  if(node.target === 'TERMINAL') return '\u7aef\u8bbe\u5907';\n  return node.target || task.executor || '-';\n}\nvar nodeMap = {};\n(data.tasks || []).forEach(function(node){ nodeMap[node.id] = node; });\nvar levelRows = [];\n(data.executionLevels || []).forEach(function(level){\n  var tasks = level.tasks || [];\n  tasks.forEach(function(task){\n    levelRows.push({\n      level: level.level,\n      relation: tasks.length > 1 ? '\u672c\u5c42\u5e76\u884c' : '\u4e32\u884c\u8282\u70b9',\n      taskId: task.taskId,\n      taskName: task.taskName,\n      taskType: task.taskType,\n      location: taskLocation(task, nodeMap),\n      inputPath: task.inputPath,\n      outputPath: task.outputPath,\n      expandedTasks: (task.expandedTasks || []).join(', ')\n    });\n  });\n});\nvar nodeRows = (data.tasks || []).map(function(node){\n  return {\n    taskId: node.id,\n    taskName: node.name,\n    taskType: node.type,\n    target: targetLabel({ taskId: node.id, executor: node.target }, nodeMap),\n    clusterCode: node.clusterCode || (node.target === 'CLOUD' ? 'cloud-main' : '-'),\n    image: node.image || '-',\n    priority: node.priority,\n    inputPath: node.inputPath,\n    outputPath: node.outputPath\n  };\n});\nvar edgeRows = (data.edges || []).map(function(edge){\n  var from = nodeMap[edge.from] || {};\n  var to = nodeMap[edge.to] || {};\n  return {\n    from: edge.from,\n    fromName: from.name || edge.from,\n    to: edge.to,\n    toName: to.name || edge.to,\n    dataKey: edge.dataKey || '-',\n    relation: (from.name || edge.from) + ' -> ' + (to.name || edge.to)\n  };\n});\ndata.levelRows = levelRows;\ndata.nodeRows = nodeRows;\ndata.edgeRows = edgeRows;\ndata.parallelSummary = levelRows.filter(function(row){ return row.relation === '\u672c\u5c42\u5e76\u884c'; }).length;\ndata.serialLevelCount = (data.executionLevels || []).length;\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+        "adaptor": "function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nvar data = payload.data || {};\nfunction taskLocation(task, nodeMap){\n  var node = nodeMap[task.taskId] || {};\n  if(node.clusterCode) return node.clusterCode;\n  if(task.executor === 'EDGE') return '边缘云';\n  if(task.executor === 'CLOUD') return '中心云';\n  if(task.executor === 'TERMINAL') return '端设备';\n  return task.executor || '-';\n}\nfunction targetLabel(task, nodeMap){\n  var node = nodeMap[task.taskId] || {};\n  if(node.target === 'EDGE') return '边缘云';\n  if(node.target === 'CLOUD') return '中心云';\n  if(node.target === 'TERMINAL') return '端设备';\n  return node.target || task.executor || '-';\n}\nvar nodeMap = {};\n(data.tasks || []).forEach(function(node){ nodeMap[node.id] = node; });\nvar levelRows = [];\n(data.executionLevels || []).forEach(function(level){\n  var tasks = level.tasks || [];\n  tasks.forEach(function(task){\n    levelRows.push({\n      level: level.level,\n      relation: tasks.length > 1 ? '本层并行' : '串行节点',\n      taskId: task.taskId,\n      taskName: task.taskName,\n      taskTypeText: flowNodeTypeText(task.taskType),\n      location: taskLocation(task, nodeMap),\n      inputPath: task.inputPath,\n      outputPath: task.outputPath,\n      expandedTasks: (task.expandedTasks || []).join(', ')\n    });\n  });\n});\nvar nodeRows = (data.tasks || []).map(function(node){\n  return {\n    taskId: node.id,\n    taskName: node.name,\n    taskTypeText: flowNodeTypeText(node.type),\n    target: targetLabel({ taskId: node.id, executor: node.target }, nodeMap),\n    clusterCode: node.clusterCode || (node.target === 'CLOUD' ? 'cloud-main' : '-'),\n    image: node.image || '-',\n    priority: node.priority,\n    inputPath: node.inputPath,\n    outputPath: node.outputPath\n  };\n});\nvar edgeRows = (data.edges || []).map(function(edge){\n  var from = nodeMap[edge.from] || {};\n  var to = nodeMap[edge.to] || {};\n  return {\n    from: edge.from,\n    fromName: from.name || edge.from,\n    to: edge.to,\n    toName: to.name || edge.to,\n    dataKey: edge.dataKey || '-',\n    relation: (from.name || edge.from) + ' -> ' + (to.name || edge.to)\n  };\n});\ndata.taskTypeText = flowTaskTypeText(data.taskType);\ndata.modelTypeText = flowModelTypeText(data.modelType);\ndata.levelRows = levelRows;\ndata.nodeRows = nodeRows;\ndata.edgeRows = edgeRows;\ndata.parallelSummary = levelRows.filter(function(row){ return row.relation === '本层并行'; }).length;\ndata.serialLevelCount = (data.executionLevels || []).length;\nreturn { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
       },
       "body": [
         {
-          "type": "alert",
-          "level": "info",
-          "body": "\u540c\u4e00\u6267\u884c\u5c42\u5185\u7684\u5b50\u4efb\u52a1\u4e4b\u95f4\u6ca1\u6709\u4f9d\u8d56\u51b2\u7a81\uff0c\u53ef\u81ea\u7136\u5e76\u884c\uff1b\u4e0b\u4e00\u5c42\u4f9d\u8d56\u4e0a\u4e00\u5c42\u7684\u7ed3\u679c\uff0c\u4f53\u73b0\u4e32\u884c\u63a7\u5236\u5173\u7cfb\u3002"
-        },
-        {
           "type": "panel",
-          "title": "\u6a21\u677f\u6982\u89c8",
+          "title": "模板概览",
           "body": [
             {
               "type": "tpl",
-              "tpl": "<div style='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px'><div><b>\u6a21\u677f\u7f16\u7801</b><br/>${templateCode}</div><div><b>\u6a21\u677f\u540d\u79f0</b><br/>${templateName}</div><div><b>\u4efb\u52a1\u7c7b\u578b</b><br/>${taskType}</div><div><b>\u6267\u884c\u5c42\u6570</b><br/>${serialLevelCount}</div></div>"
+               "tpl": "<div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px'><div><b>模板编码</b><br/>${templateCode}</div><div><b>模板名称</b><br/>${templateName}</div><div><b>执行层数</b><br/>${serialLevelCount}</div></div>"
             }
           ]
         },
@@ -37,64 +32,136 @@
           "type": "tabs",
           "tabs": [
             {
-              "title": "\u4e32\u5e76\u6267\u884c\u5c42\u7ea7",
+              "title": "串并执行层级",
               "body": [
                 {
                   "type": "table",
                   "source": "${levelRows}",
                   "columns": [
-                    { "name": "level", "label": "\u6267\u884c\u5c42\u7ea7", "width": 90 },
+                    {
+                      "name": "level",
+                      "label": "执行层级",
+                      "width": 90
+                    },
                     {
                       "name": "relation",
-                      "label": "\u4e32\u5e76\u5173\u7cfb",
+                      "label": "串并关系",
                       "type": "mapping",
                       "map": {
-                        "\u672c\u5c42\u5e76\u884c": "<span class='label label-info'>\u672c\u5c42\u5e76\u884c</span>",
-                        "\u4e32\u884c\u8282\u70b9": "<span class='label label-default'>\u4e32\u884c\u8282\u70b9</span>",
+                        "本层并行": "<span class='label label-info'>本层并行</span>",
+                        "串行节点": "<span class='label label-default'>串行节点</span>",
                         "*": "${relation}"
                       },
                       "width": 110
                     },
-                    { "name": "taskId", "label": "\u5b50\u4efb\u52a1 ID", "width": 180 },
-                    { "name": "taskName", "label": "\u5b50\u4efb\u52a1\u540d\u79f0" },
-                    { "name": "taskType", "label": "\u6267\u884c\u65b9\u5f0f", "width": 110 },
-                    { "name": "location", "label": "\u6267\u884c\u4f4d\u7f6e", "width": 130 },
-                    { "name": "inputPath", "label": "\u8f93\u5165\u8def\u5f84", "breakpoint": "*" },
-                    { "name": "outputPath", "label": "\u8f93\u51fa\u8def\u5f84", "breakpoint": "*" },
-                    { "name": "expandedTasks", "label": "\u5c55\u5f00\u7ed3\u679c", "breakpoint": "*" }
+                    {
+                      "name": "taskId",
+                      "label": "子任务 ID",
+                      "width": 180
+                    },
+                    {
+                      "name": "taskName",
+                      "label": "子任务名称"
+                    },
+                    {
+                      "name": "taskTypeText",
+                       "label": "节点执行类型",
+                      "width": 110
+                    },
+                    {
+                      "name": "location",
+                      "label": "执行位置",
+                      "width": 130
+                    },
+                    {
+                      "name": "inputPath",
+                      "label": "输入路径",
+                      "breakpoint": "*"
+                    },
+                    {
+                      "name": "outputPath",
+                      "label": "输出路径",
+                      "breakpoint": "*"
+                    },
+                    {
+                      "name": "expandedTasks",
+                       "label": "展开实例",
+                      "breakpoint": "*"
+                    }
                   ]
                 }
               ]
             },
             {
-              "title": "\u5b50\u4efb\u52a1\u6267\u884c\u4f4d\u7f6e",
+              "title": "子任务执行位置",
               "body": [
                 {
                   "type": "table",
                   "source": "${nodeRows}",
                   "columns": [
-                    { "name": "taskId", "label": "\u5b50\u4efb\u52a1 ID", "width": 180 },
-                    { "name": "taskName", "label": "\u5b50\u4efb\u52a1\u540d\u79f0" },
-                    { "name": "taskType", "label": "\u7c7b\u578b", "width": 110 },
-                    { "name": "target", "label": "\u76ee\u6807\u4f4d\u7f6e", "width": 120 },
-                    { "name": "clusterCode", "label": "\u6267\u884c\u96c6\u7fa4", "width": 130 },
-                    { "name": "image", "label": "\u955c\u50cf" },
-                    { "name": "priority", "label": "\u4f18\u5148\u7ea7", "width": 90 }
+                    {
+                      "name": "taskId",
+                      "label": "子任务 ID",
+                      "width": 180
+                    },
+                    {
+                      "name": "taskName",
+                      "label": "子任务名称"
+                    },
+                    {
+                      "name": "taskTypeText",
+                       "label": "节点执行类型",
+                      "width": 110
+                    },
+                    {
+                      "name": "target",
+                      "label": "目标位置",
+                      "width": 120
+                    },
+                    {
+                      "name": "clusterCode",
+                      "label": "执行集群",
+                      "width": 130
+                    },
+                    {
+                      "name": "image",
+                      "label": "镜像"
+                    },
+                    {
+                      "name": "priority",
+                      "label": "优先级",
+                      "width": 90
+                    }
                   ]
                 }
               ]
             },
             {
-              "title": "\u4f9d\u8d56\u5173\u7cfb",
+              "title": "依赖关系",
               "body": [
                 {
                   "type": "table",
                   "source": "${edgeRows}",
                   "columns": [
-                    { "name": "relation", "label": "\u4f9d\u8d56\u94fe\u8def" },
-                    { "name": "from", "label": "\u524d\u7f6e\u4efb\u52a1 ID", "width": 170 },
-                    { "name": "to", "label": "\u540e\u7eed\u4efb\u52a1 ID", "width": 170 },
-                    { "name": "dataKey", "label": "\u4f9d\u8d56\u8bf4\u660e", "width": 160 }
+                    {
+                      "name": "relation",
+                      "label": "依赖链路"
+                    },
+                    {
+                      "name": "from",
+                      "label": "前置任务 ID",
+                      "width": 170
+                    },
+                    {
+                      "name": "to",
+                      "label": "后续任务 ID",
+                      "width": 170
+                    },
+                    {
+                      "name": "dataKey",
+                       "label": "依赖数据标识",
+                      "width": 160
+                    }
                   ]
                 }
               ]

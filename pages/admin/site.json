@@ -3,250 +3,64 @@
   "msg": "",
   "data": {
     "pages": [
+      { "url": "/", "redirect": "/home" },
+      { "url": "/dashboard", "redirect": "/home" },
+      { "url": "/home", "schemaApi": "get:/pages/public/home/home-page.json", "hidden": true },
       {
-        "url": "/",
-        "redirect": "/home"
+        "label": "多云流任务管理",
+        "children": [
+          { "label": "流任务模板编排", "url": "/flow/template", "schemaApi": "get:/pages/public/flow/flow-template-list.json?v=20260601-flow11", "className": "child1" },
+          { "label": "流任务模板结构", "url": "/flow/template/view", "schemaApi": "get:/pages/public/flow/flow-template-view.json?v=20260623-view1", "hidden": true, "className": "child1" },
+          { "label": "创建流任务", "url": "/flow/task/create", "schemaApi": "get:/pages/public/flow/flow-task-create.json?v=20260601-flow8", "className": "child1" },
+          { "label": "流任务运行监控", "url": "/flow/control", "schemaApi": "get:/pages/public/flow/flow-control-center.json?v=20260804-result-dialog1", "className": "child1" },
+          { "label": "数据产物", "url": "/flow/minio", "schemaApi": "get:/pages/public/flow/minio-browser.json?v=20260803-minio2", "className": "child1" }
+        ]
       },
       {
-        "label": "\u4e91\u8fb9\u7aef\u534f\u540c\u6570\u636e\u6d41\u5904\u7406",
+        "label": "模块化边缘服务部署",
         "children": [
+          { "label": "应用运行状态", "url": "/application/runtime", "schemaApi": "get:/pages/public/distribution/application-distribution-records.json?v=20260622-dist2", "className": "child1" },
+          { "label": "应用与镜像", "url": "/application/inventory", "schemaApi": "get:/pages/public/distribution/application-inventory.json?v=20260714-merged1", "className": "child1" },
+          { "label": "镜像详情", "url": "/image/:image", "schemaApi": "get:/pages/public/docker/image-detail.json", "hidden": true },
+          { "label": "镜像上传与发布", "url": "/images/new", "schemaApi": "get:/pages/public/docker/image-new.json?v=20260807-cluster-checkbox2", "className": "child1" },
+          { "label": "应用分发与同步记录", "url": "/multi-cloud/on-demand-distribution", "schemaApi": "get:/pages/public/distribution/on-demand-distribution-records.json?v=20260807-ondemand-page2", "className": "child1" },
           {
-            "label": "\u6d41\u4efb\u52a1\u63a7\u5236\u7f16\u6392",
-            "url": "flow",
-            "schema": {
-              "type": "page",
-              "title": "Flow",
-              "body": "Flow"
-            },
+            "label": "集群资源",
+            "className": "child1",
             "children": [
-              {
-                "label": "\u6d41\u4efb\u52a1\u7f16\u6392\u4e2d\u5fc3",
-                "url": "/flow/template",
-                "schemaApi": "get:/pages/public/flow/flow-template-list.json?v=20260601-flow11"
-              },
-              {
-                "label": "\u6d41\u4efb\u52a1\u6a21\u677f\u7ed3\u6784",
-                "url": "/flow/template/view",
-                "schemaApi": "get:/pages/public/flow/flow-template-view.json?v=20260623-view1",
-                "hidden": true
-              },
-              {
-                "label": "\u521b\u5efa\u6d41\u4efb\u52a1",
-                "url": "/flow/task/create",
-                "schemaApi": "get:/pages/public/flow/flow-task-create.json?v=20260601-flow8"
-              },
-              {
-                "label": "\u6d41\u63a7\u5236\u4e2d\u5fc3",
-                "url": "/flow/control",
-                "schemaApi": "get:/pages/public/flow/flow-control-center.json?v=20260601-flow4"
-              },
-              {
-                "label": "\u5bf9\u8c61\u5b58\u50a8\u6570\u636e",
-                "url": "/flow/minio",
-                "schemaApi": "get:/pages/public/flow/minio-browser.json?v=20260603-minio1"
-              }
-            ]
-          },
-          {
-            "label": "\u8ba1\u7b97\u6267\u884c\u6a21\u5757",
-            "url": "com",
-            "schema": {
-              "type": "page",
-              "title": "Compute",
-              "body": "Compute"
-            },
-            "children": [
-              {
-                "label": "\u672c\u5730\u6570\u636e\u5904\u7406",
-                "url": "4",
-                "schema": {
-                  "type": "page",
-                  "title": "Local Data Processing",
-                  "body": "Local Data Processing"
-                }
-              },
-              {
-                "label": "\u672c\u5730\u6a21\u578b\u8bad\u7ec3",
-                "url": "5",
-                "schema": {
-                  "type": "page",
-                  "title": "Local Model Training",
-                  "body": "Local Model Training"
-                }
-              },
-              {
-                "label": "\u6a21\u578b\u805a\u5408",
-                "url": "6",
-                "schema": {
-                  "type": "page",
-                  "title": "Model Aggregation",
-                  "body": "Model Aggregation"
-                }
-              }
+              { "label": "节点", "url": "/node", "schemaApi": "get:/pages/public/node/node-list.json?v=20260803-arch1" },
+              { "label": "节点详情", "url": "/node/:clusterCode/:name", "schemaApi": "get:/pages/public/node/node-single-all.json?v=20260607-node2" },
+              { "label": "命名空间", "url": "/namespace", "schemaApi": "get:/pages/public/namespace/namespace-list.json?v=20260607-multi1" },
+              { "label": "命名空间详情", "url": "/namespace/:clusterCode/:name", "schemaApi": "get:/pages/public/namespace/namespace-single-all.json?v=20260607-multi1" },
+              { "label": "服务", "url": "/service", "schemaApi": "get:/pages/public/service/service-list.json?v=20260607-multi1" },
+              { "label": "服务详情", "url": "/service/:clusterCode/:namespace/:name", "schemaApi": "get:/pages/public/service/service-single-all.json?v=20260607-multi1" },
+              { "label": "创建服务", "url": "/services/new", "schemaApi": "get:/pages/public/service/service-new.json?v=20260607-multi1", "hidden": true },
+              { "label": "工作负载", "url": "/deployment", "schemaApi": "get:/pages/public/deployment/deployment-list.json?v=20260607-multi1" },
+              { "label": "工作负载详情", "url": "/deployment/:clusterCode/:namespace/:name", "schemaApi": "get:/pages/public/deployment/deployment-single-all.json?v=20260607-multi1" },
+              { "label": "创建工作负载", "url": "/deployments/new", "schemaApi": "get:/pages/public/deployment/deployment-new.json?v=20260607-multi1", "hidden": true },
+              { "label": "按镜像创建工作负载", "url": "/deployments/new/:image", "schemaApi": "get:/pages/public/deployment/deployment-new.json?v=20260607-multi1", "hidden": true }
             ]
           }
         ]
       },
       {
-        "label": "\u6a21\u5757\u5316\u8fb9\u7f18\u670d\u52a1\u90e8\u7f72",
+        "label": "基于强化学习的云边端任务卸载",
         "children": [
-          {
-            "label": "\u96c6\u7fa4\u6982\u51b5",
-            "url": "/home",
-            "schemaApi": "get:/pages/public/home/home-page.json",
-            "className": "child1"
-          },
-          {
-            "label": "\u5e94\u7528\u8fd0\u884c\u72b6\u6001",
-            "url": "/application/runtime",
-            "schemaApi": "get:/pages/public/distribution/application-distribution-records.json?v=20260622-dist2",
-            "className": "child1"
-          },
-          {
-            "label": "\u5e94\u7528\u4e0e\u955c\u50cf\u4ed3\u5e93",
-            "url": "/application/inventory",
-            "schemaApi": "get:/pages/public/distribution/application-inventory.json?v=20260714-merged1",
-            "className": "child1"
-          },
-          {
-            "label": "\u955c\u50cf\u8be6\u60c5",
-            "url": "/image/:image",
-            "schemaApi": "get:/pages/public/docker/image-detail.json",
-            "hidden": true
-          },
-          {
-            "label": "\u521b\u5efa\u955c\u50cf",
-            "url": "/images/new",
-            "schemaApi": "get:/pages/public/docker/image-new.json",
-            "hidden": true
-          },
-          {
-            "label": "\u96c6\u7fa4\u7ba1\u7406",
-            "className": "child1",
-            "children": [
-              {
-                "label": "Node",
-                "url": "/node",
-                "schemaApi": "get:/pages/public/node/node-list.json?v=20260607-node2"
-              },
-              {
-                "label": "Node\u8be6\u60c5",
-                "url": "/node/:clusterCode/:name",
-                "schemaApi": "get:/pages/public/node/node-single-all.json?v=20260607-node2"
-              },
-              {
-                "label": "Namespace",
-                "url": "/namespace",
-                "schemaApi": "get:/pages/public/namespace/namespace-list.json?v=20260607-multi1"
-              },
-              {
-                "label": "Namespace\u8be6\u60c5",
-                "url": "/namespace/:clusterCode/:name",
-                "schemaApi": "get:/pages/public/namespace/namespace-single-all.json?v=20260607-multi1"
-              },
-              {
-                "label": "Service",
-                "url": "/service",
-                "schemaApi": "get:/pages/public/service/service-list.json?v=20260607-multi1"
-              },
-              {
-                "label": "Service\u8be6\u60c5",
-                "url": "/service/:clusterCode/:namespace/:name",
-                "schemaApi": "get:/pages/public/service/service-single-all.json?v=20260607-multi1"
-              },
-              {
-                "label": "\u521b\u5efaService",
-                "url": "/services/new",
-                "schemaApi": "get:/pages/public/service/service-new.json?v=20260607-multi1",
-                "hidden": true
-              },
-              {
-                "label": "Deployment",
-                "url": "/deployment",
-                "schemaApi": "get:/pages/public/deployment/deployment-list.json?v=20260607-multi1"
-              },
-              {
-                "label": "Deployment\u8be6\u60c5",
-                "url": "/deployment/:clusterCode/:namespace/:name",
-                "schemaApi": "get:/pages/public/deployment/deployment-single-all.json?v=20260607-multi1"
-              },
-              {
-                "label": "\u521b\u5efaDeployment",
-                "url": "/deployments/new",
-                "schemaApi": "get:/pages/public/deployment/deployment-new.json?v=20260607-multi1",
-                "hidden": true
-              },
-              {
-                "label": "CreateDeploymentByImage",
-                "url": "/deployments/new/:image",
-                "schemaApi": "get:/pages/public/deployment/deployment-new.json?v=20260607-multi1",
-                "hidden": true
-              }
-            ]
-          }
+          { "label": "卸载决策记录", "url": "/offload/tasks", "schemaApi": "get:/pages/public/distribution/offload-tasks.json?v=20260809-rl-offload1", "className": "child1" }
         ]
       },
       {
-        "label": "\u591a\u6838\u667a\u80fd\u4efb\u52a1\u5378\u8f7d",
+        "label": "终端数据处理",
         "children": [
-          {
-            "label": "智能任务卸载",
-            "url": "/offload/tasks",
-            "schemaApi": "get:/pages/public/distribution/offload-tasks.json?v=20260715-offload1",
-            "className": "child1"
-          }
+          { "label": "终端设备接入", "url": "/multi-cloud/terminal-devices", "schemaApi": "get:/pages/public/distribution/terminal-devices.json?v=20260713-terminal1", "className": "child1" },
+          { "label": "边缘数据处理策略", "url": "/multi-cloud/edge-data-policy", "schemaApi": "get:/pages/public/distribution/edge-data-policy.json?v=20260807-edge-policy-flow1", "className": "child1" }
         ]
       },
       {
-        "label": "\u591a\u4e91\u534f\u4f5c",
+        "label": "账号管理",
         "children": [
-          {
-            "label": "\u7b56\u7565\u7ba1\u7406",
-            "url": "/multi-cloud/strategy",
-            "schemaApi": "get:/pages/public/distribution/strategy-management.json?v=20260702-policy1",
-            "className": "child1"
-          },
-          {
-            "label": "终端设备接入",
-            "url": "/multi-cloud/terminal-devices",
-            "schemaApi": "get:/pages/public/distribution/terminal-devices.json?v=20260713-terminal1",
-            "className": "child1"
-          },
-          {
-            "label": "边缘端数据策略",
-            "url": "/multi-cloud/edge-data-policy",
-            "schemaApi": "get:/pages/public/distribution/edge-data-policy.json?v=20260707-edge-policy1",
-            "className": "child1"
-          },
-          {
-            "label": "数据流转记录",
-            "url": "/multi-cloud/data-records",
-            "schemaApi": "get:/pages/public/distribution/data-records.json?v=20260707-data-flow3",
-            "className": "child1"
-          },
-          {
-            "label": "\u5e94\u7528\u5206\u53d1\u8bb0\u5f55",
-            "url": "/multi-cloud/on-demand-distribution",
-            "schemaApi": "get:/pages/public/distribution/on-demand-distribution-records.json?v=20260623-ondemand1",
-            "className": "child1"
-          }
-        ]
-      },
-      {
-        "label": "\u8d26\u53f7\u7ba1\u7406",
-        "children": [
-          {
-            "label": "\u7528\u6237\u7ba1\u7406",
-            "className": "child1",
-            "url": "/user/manage",
-            "schemaApi": "get:/pages/public/user/manage.json"
-          },
-          {
-            "label": "\u4e2a\u4eba\u4e2d\u5fc3",
-            "className": "child1",
-            "url": "/user/info",
-            "schemaApi": "get:/pages/public/user/peer.json"
-          }
+          { "label": "用户管理", "className": "child1", "url": "/user/manage", "schemaApi": "get:/pages/public/user/manage.json" },
+          { "label": "个人中心", "className": "child1", "url": "/user/info", "schemaApi": "get:/pages/public/user/peer.json" }
         ]
       }
     ]

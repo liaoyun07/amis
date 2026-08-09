@@ -1,0 +1,18 @@
+{
+  "type": "page",
+  "name": "main-menu",
+  "title": "云边端协同数据流处理系统",
+  "subTitle": "统一编排流任务、管理边缘资源并查看协同处理结果",
+  "body": {
+    "type": "grid",
+    "className": "main-menu-grid",
+    "style": { "background": "#f6f8fb", "padding": "24px", "borderRadius": "8px" },
+    "columns": [
+      { "xs": 12, "md": 6, "body": { "type": "tpl", "tpl": "<a href=\"/flow/template\" style=\"display:flex;min-height:190px;height:100%;margin:8px;padding:28px;text-decoration:none;color:#172033;background:#fff;border:1px solid #dce5f2;border-top:3px solid #2864d7;border-radius:8px;box-sizing:border-box;box-shadow:0 4px 14px rgba(31,52,83,.06);\"><div style=\"display:flex;flex-direction:column;width:100%;\"><div style=\"display:flex;align-items:center;gap:14px;\"><span style=\"display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:8px;background:#eaf2ff;color:#2864d7;font-size:15px;font-weight:700;\">01</span><span style=\"font-size:21px;font-weight:600;\">多云流任务管理</span></div><div style=\"margin:18px 0 20px 56px;color:#64748b;font-size:14px;line-height:1.7;\">流任务模板、运行监控与数据产物</div></div></a>" } },
+      { "xs": 12, "md": 6, "body": { "type": "tpl", "tpl": "<a href=\"/application/runtime\" style=\"display:flex;min-height:190px;height:100%;margin:8px;padding:28px;text-decoration:none;color:#172033;background:#fff;border:1px solid #dce5f2;border-top:3px solid #159a82;border-radius:8px;box-sizing:border-box;box-shadow:0 4px 14px rgba(31,52,83,.06);\"><div style=\"display:flex;flex-direction:column;width:100%;\"><div style=\"display:flex;align-items:center;gap:14px;\"><span style=\"display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:8px;background:#e8f7f3;color:#147e6b;font-size:15px;font-weight:700;\">02</span><span style=\"font-size:21px;font-weight:600;\">模块化边缘服务部署</span></div><div style=\"margin:18px 0 20px 56px;color:#64748b;font-size:14px;line-height:1.7;\">集群资源、应用运行和镜像发布</div></div></a>" } },
+      { "xs": 12, "md": 6, "body": { "type": "tpl", "tpl": "<a href=\"/offload/tasks\" style=\"display:flex;min-height:190px;height:100%;margin:8px;padding:28px;text-decoration:none;color:#172033;background:#fff;border:1px solid #dce5f2;border-top:3px solid #c87912;border-radius:8px;box-sizing:border-box;box-shadow:0 4px 14px rgba(31,52,83,.06);\"><div style=\"display:flex;flex-direction:column;width:100%;\"><div style=\"display:flex;align-items:center;gap:14px;\"><span style=\"display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:8px;background:#fff4e5;color:#a75d09;font-size:15px;font-weight:700;\">03</span><span style=\"font-size:21px;font-weight:600;\">基于强化学习的云边端任务卸载</span></div><div style=\"margin:18px 0 20px 56px;color:#64748b;font-size:14px;line-height:1.7;\">任务请求、卸载决策与执行结果</div></div></a>" } },
+      { "xs": 12, "md": 6, "body": { "type": "tpl", "tpl": "<a href=\"/multi-cloud/terminal-devices\" style=\"display:flex;min-height:190px;height:100%;margin:8px;padding:28px;text-decoration:none;color:#172033;background:#fff;border:1px solid #dce5f2;border-top:3px solid #1683a4;border-radius:8px;box-sizing:border-box;box-shadow:0 4px 14px rgba(31,52,83,.06);\"><div style=\"display:flex;flex-direction:column;width:100%;\"><div style=\"display:flex;align-items:center;gap:14px;\"><span style=\"display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:8px;background:#e8f6fa;color:#126d89;font-size:15px;font-weight:700;\">04</span><span style=\"font-size:21px;font-weight:600;\">终端数据处理</span></div><div style=\"margin:18px 0 20px 56px;color:#64748b;font-size:14px;line-height:1.7;\">终端接入与边缘数据处理策略</div></div></a>" } }
+    ],
+    "gap": "lg"
+  }
+}

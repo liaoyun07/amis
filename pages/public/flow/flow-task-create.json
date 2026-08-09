@@ -14,7 +14,7 @@
       "initApi": {
         "method": "get",
         "url": "${API_HOST}/datastream/flow/template/detail?templateCode=fedavg-flow",
-      "adaptor": "function rowsOf(data){\n  var defaults = data.defaultParams || {};\n  var map = {};\n  function numberConfig(param, value){\n    if((param.valueType || 'STRING').toUpperCase() !== 'NUMBER') return {};\n    var precision = param.precision;\n    if(precision === undefined || precision === null || precision === ''){\n      var text = String(value === undefined || value === null ? '' : value).toLowerCase();\n      if(text.indexOf('e-') > -1) precision = Number(text.split('e-')[1]) || 0;\n      else precision = text.indexOf('.') > -1 ? text.split('.')[1].length : 0;\n    }\n    precision = Math.max(0, Number(precision) || 0);\n    var step = param.step;\n    if(step === undefined || step === null || step === '') step = precision > 0 ? Math.pow(10, -precision) : 1;\n    return { precision: precision, step: Number(step) };\n  }\n  function put(param, usedBy){\n    if(!param || !param.key) return;\n    var key = param.key;\n    var resolvedValue = defaults[key] !== undefined ? defaults[key] : param.defaultValue;\n    var numeric = numberConfig(param, resolvedValue);\n    if(!map[key]) map[key] = {\n      key: key,\n      label: param.label || key,\n      value: resolvedValue,\n      valueType: param.valueType || 'STRING',\n      controlType: param.controlType || 'INPUT',\n      options: Array.isArray(param.options) ? param.options : [],\n      step: numeric.step,\n      precision: numeric.precision,\n      required: !!param.required,\n      usedBy: [],\n      description: param.description || ''\n    };\n    if(usedBy && map[key].usedBy.indexOf(usedBy) < 0) map[key].usedBy.push(usedBy);\n  }\n  var runtimeParams = data.runtimeParams || [];\n  if(runtimeParams.length){\n    runtimeParams.forEach(function(param){ put(param, '运行参数'); });\n  } else {\n    (data.nodes || []).forEach(function(node){\n      (node.paramBindings || []).forEach(function(binding){ put(binding, node.name || node.id); });\n    });\n    (data.loops || []).forEach(function(loop){\n      if(loop.countParam) put({ key: loop.countParam, label: loop.countParam, valueType: 'NUMBER', controlType: 'INPUT', required: true, description: 'loop count' }, loop.id || 'loop');\n    });\n  }\n  return Object.keys(map).map(function(key){\n    var row = map[key];\n    if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2);\n    row.usedBy = row.usedBy.join(', ');\n    return row;\n  });\n} var data = payload.data || {}; var defaults = data.defaultParams || {}; var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, modelType: data.modelType, taskName: (defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(data), splitItems: splitItems } };"
+        "adaptor": "function rowsOf(data){\n  var defaults = data.defaultParams || {};\n  var map = {};\n  function numberConfig(param, value){\n    if((param.valueType || 'STRING').toUpperCase() !== 'NUMBER') return {};\n    var precision = param.precision;\n    if(precision === undefined || precision === null || precision === ''){\n      var text = String(value === undefined || value === null ? '' : value).toLowerCase();\n      if(text.indexOf('e-') > -1) precision = Number(text.split('e-')[1]) || 0;\n      else precision = text.indexOf('.') > -1 ? text.split('.')[1].length : 0;\n    }\n    precision = Math.max(0, Number(precision) || 0);\n    var step = param.step;\n    if(step === undefined || step === null || step === '') step = precision > 0 ? Math.pow(10, -precision) : 1;\n    return { precision: precision, step: Number(step) };\n  }\n  function put(param, usedBy){\n    if(!param || !param.key) return;\n    var key = param.key;\n    var resolvedValue = defaults[key] !== undefined ? defaults[key] : param.defaultValue;\n    var numeric = numberConfig(param, resolvedValue);\n    if(!map[key]) map[key] = {\n      key: key,\n      label: param.label || key,\n      value: resolvedValue,\n      valueType: param.valueType || 'STRING',\n      enumEnabled: param.enumEnabled === true || String(param.enumEnabled || '').toLowerCase() === 'true' || String(param.controlType || '').toUpperCase() === 'SELECT',\n      options: Array.isArray(param.options) ? param.options : [],\n      step: numeric.step,\n      precision: numeric.precision,\n      required: !!param.required,\n      usedBy: [],\n      description: param.description || ''\n    };\n    if(usedBy && map[key].usedBy.indexOf(usedBy) < 0) map[key].usedBy.push(usedBy);\n  }\n  var runtimeParams = data.runtimeParams || [];\n  if(runtimeParams.length){\n    runtimeParams.forEach(function(param){ put(param, '运行参数'); });\n  } else {\n    (data.nodes || []).forEach(function(node){\n      (node.paramBindings || []).forEach(function(binding){ put(binding, node.name || node.id); });\n    });\n    (data.loops || []).forEach(function(loop){\n      if(loop.countParam) put({ key: loop.countParam, label: loop.countParam, valueType: 'NUMBER', enumEnabled: false, required: true, description: 'loop count' }, loop.id || 'loop');\n    });\n  }\n  return Object.keys(map).map(function(key){\n    var row = map[key];\n    if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2);\n    row.usedBy = row.usedBy.join(', ');\n    return row;\n  });\n} function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nvar data = payload.data || {}; var defaults = data.defaultParams || {}; var split = data.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { templateCode: data.templateCode || 'fedavg-flow', templateName: data.templateName, taskType: data.taskType, taskTypeText: flowTaskTypeText(data.taskType), modelTypeText: flowModelTypeText(data.modelType), modelType: data.modelType, taskName: (defaults.taskName || ((data.templateCode || 'fedavg-flow') + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(data), splitItems: splitItems } };"
       },
       "api": {
         "method": "post",
@@ -28,7 +28,7 @@
         },
         "adaptor": "return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: payload.data };",
         "messages": {
-          "success": "流任务已提交，可到流控制中心查看运行状态。"
+          "success": "流任务已提交，可到流任务运行监控查看运行状态。"
         }
       },
       "actions": [
@@ -52,7 +52,7 @@
                   "namespace": "${namespace}",
                   "paramRows": "${paramRows}"
                 },
-                "adaptor": "var data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskType: task.taskType, executor: task.executor, parallelGroup: task.parallelGroup ? '是' : '否', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = levelRows; var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, key: item.key, value: item.value, injectAs: item.bindTarget || item.key, description: item.description }); }); }); data.paramRows = paramRows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
+                "adaptor": "function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nvar data = payload.data || {}; var levelRows = []; (data.executionLevels || []).forEach(function(level){ (level.tasks || []).forEach(function(task){ levelRows.push({ level: level.level, taskId: task.taskId, taskName: task.taskName, taskTypeText: flowNodeTypeText(task.taskType), executor: task.executor, parallelGroup: task.parallelGroup ? '\\u662f' : '\\u5426', expandedTasks: (task.expandedTasks || []).join(', '), inputPath: task.inputPath, outputPath: task.outputPath }); }); }); data.levelRows = levelRows; var paramRows = []; (data.paramGroups || []).forEach(function(group){ (group.params || []).forEach(function(item){ paramRows.push({ nodeName: group.nodeName, key: item.key, value: item.value, injectAs: item.bindTarget || item.key, description: item.description }); }); }); data.paramRows = paramRows; return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: data };"
               },
               "body": [
                 {
@@ -99,7 +99,7 @@
                     },
                     {
                       "name": "description",
-                      "label": "说明"
+                       "label": "参数说明"
                     }
                   ]
                 },
@@ -123,13 +123,13 @@
                       "label": "子任务名称"
                     },
                     {
-                      "name": "taskType",
-                      "label": "类型",
+                      "name": "taskTypeText",
+                       "label": "节点执行类型",
                       "width": 130
                     },
                     {
                       "name": "executor",
-                      "label": "位置",
+                      "label": "执行位置",
                       "width": 90
                     },
                     {
@@ -181,16 +181,16 @@
                   "source": {
                     "method": "get",
                     "url": "${API_HOST}/datastream/flow/template/list",
-                    "adaptor": "function rowsOf(data){\n  var defaults = data.defaultParams || {};\n  var map = {};\n  function numberConfig(param, value){\n    if((param.valueType || 'STRING').toUpperCase() !== 'NUMBER') return {};\n    var precision = param.precision;\n    if(precision === undefined || precision === null || precision === ''){\n      var text = String(value === undefined || value === null ? '' : value).toLowerCase();\n      if(text.indexOf('e-') > -1) precision = Number(text.split('e-')[1]) || 0;\n      else precision = text.indexOf('.') > -1 ? text.split('.')[1].length : 0;\n    }\n    precision = Math.max(0, Number(precision) || 0);\n    var step = param.step;\n    if(step === undefined || step === null || step === '') step = precision > 0 ? Math.pow(10, -precision) : 1;\n    return { precision: precision, step: Number(step) };\n  }\n  function put(param, usedBy){\n    if(!param || !param.key) return;\n    var key = param.key;\n    var resolvedValue = defaults[key] !== undefined ? defaults[key] : param.defaultValue;\n    var numeric = numberConfig(param, resolvedValue);\n    if(!map[key]) map[key] = {\n      key: key,\n      label: param.label || key,\n      value: resolvedValue,\n      valueType: param.valueType || 'STRING',\n      controlType: param.controlType || 'INPUT',\n      options: Array.isArray(param.options) ? param.options : [],\n      step: numeric.step,\n      precision: numeric.precision,\n      required: !!param.required,\n      usedBy: [],\n      description: param.description || ''\n    };\n    if(usedBy && map[key].usedBy.indexOf(usedBy) < 0) map[key].usedBy.push(usedBy);\n  }\n  var runtimeParams = data.runtimeParams || [];\n  if(runtimeParams.length){\n    runtimeParams.forEach(function(param){ put(param, '运行参数'); });\n  } else {\n    (data.nodes || []).forEach(function(node){\n      (node.paramBindings || []).forEach(function(binding){ put(binding, node.name || node.id); });\n    });\n    (data.loops || []).forEach(function(loop){\n      if(loop.countParam) put({ key: loop.countParam, label: loop.countParam, valueType: 'NUMBER', controlType: 'INPUT', required: true, description: 'loop count' }, loop.id || 'loop');\n    });\n  }\n  return Object.keys(map).map(function(key){\n    var row = map[key];\n    if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2);\n    row.usedBy = row.usedBy.join(', ');\n    return row;\n  });\n} return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, modelType: item.modelType, taskName: (defaults.taskName || (item.templateCode + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(item), splitItems: splitItems }; }) } };"
+                    "adaptor": "function flowTaskTypeText(v){\n  var map = {\n    FEDERATED_LEARNING_FEDAVG: '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    EDGE_DATA_PREPROCESS: '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    EDGE_ONLY_ANOMALY: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b',\n    EDGE_ANOMALY_FUSION: '\\u8fb9\\u7f18\\u5f02\\u5e38\\u878d\\u5408',\n    FL: '\\u8054\\u90a6\\u5b66\\u4e60',\n    'fedavg-custom-flow': '\\u81ea\\u5b9a\\u4e49 FedAvg \\u6d41\\u4efb\\u52a1',\n    'fedavg-custom-verify': 'FedAvg \\u81ea\\u5b9a\\u4e49\\u7f16\\u6392\\u9a8c\\u8bc1',\n    'fedavg-flow': '\\u8054\\u90a6\\u5b66\\u4e60 FedAvg',\n    'edge-preprocess-flow': '\\u8fb9\\u7f18\\u6570\\u636e\\u9884\\u5904\\u7406',\n    'edge-anomaly-flow': '\\u8fb9\\u7f18\\u5f02\\u5e38\\u68c0\\u6d4b'\n  };\n  return map[v] || v || '-';\n}\nfunction flowModelTypeText(v){\n  var map = { MIXED: '\\u6df7\\u5408\\u6d41\\u7a0b', PARALLEL: '\\u5e76\\u884c\\u6d41\\u7a0b', SERIAL: '\\u4e32\\u884c\\u6d41\\u7a0b' };\n  return map[v] || v || '-';\n}\nfunction flowNodeTypeText(v){\n  var map = { JOB: '\\u5355\\u6b21\\u4efb\\u52a1', PARALLEL_GROUP: '\\u5e76\\u884c\\u5c55\\u5f00\\u4efb\\u52a1' };\n  return map[v] || v || '-';\n}\nfunction rowsOf(data){\n  var defaults = data.defaultParams || {};\n  var map = {};\n  function numberConfig(param, value){\n    if((param.valueType || 'STRING').toUpperCase() !== 'NUMBER') return {};\n    var precision = param.precision;\n    if(precision === undefined || precision === null || precision === ''){\n      var text = String(value === undefined || value === null ? '' : value).toLowerCase();\n      if(text.indexOf('e-') > -1) precision = Number(text.split('e-')[1]) || 0;\n      else precision = text.indexOf('.') > -1 ? text.split('.')[1].length : 0;\n    }\n    precision = Math.max(0, Number(precision) || 0);\n    var step = param.step;\n    if(step === undefined || step === null || step === '') step = precision > 0 ? Math.pow(10, -precision) : 1;\n    return { precision: precision, step: Number(step) };\n  }\n  function put(param, usedBy){\n    if(!param || !param.key) return;\n    var key = param.key;\n    var resolvedValue = defaults[key] !== undefined ? defaults[key] : param.defaultValue;\n    var numeric = numberConfig(param, resolvedValue);\n    if(!map[key]) map[key] = {\n      key: key,\n      label: param.label || key,\n      value: resolvedValue,\n      valueType: param.valueType || 'STRING',\n      enumEnabled: param.enumEnabled === true || String(param.enumEnabled || '').toLowerCase() === 'true' || String(param.controlType || '').toUpperCase() === 'SELECT',\n      options: Array.isArray(param.options) ? param.options : [],\n      step: numeric.step,\n      precision: numeric.precision,\n      required: !!param.required,\n      usedBy: [],\n      description: param.description || ''\n    };\n    if(usedBy && map[key].usedBy.indexOf(usedBy) < 0) map[key].usedBy.push(usedBy);\n  }\n  var runtimeParams = data.runtimeParams || [];\n  if(runtimeParams.length){\n    runtimeParams.forEach(function(param){ put(param, '运行参数'); });\n  } else {\n    (data.nodes || []).forEach(function(node){\n      (node.paramBindings || []).forEach(function(binding){ put(binding, node.name || node.id); });\n    });\n    (data.loops || []).forEach(function(loop){\n      if(loop.countParam) put({ key: loop.countParam, label: loop.countParam, valueType: 'NUMBER', enumEnabled: false, required: true, description: 'loop count' }, loop.id || 'loop');\n    });\n  }\n  return Object.keys(map).map(function(key){\n    var row = map[key];\n    if(row.valueType === 'JSON' && typeof row.value !== 'string') row.value = JSON.stringify(row.value, null, 2);\n    row.usedBy = row.usedBy.join(', ');\n    return row;\n  });\n} return { ...payload, status: payload.status === 200 ? 0 : payload.status, msg: payload.message, data: { options: (payload.data || []).map(function(item){ var defaults = item.defaultParams || {}; var split = item.splitRule || {}; var splitParams = split.params || {}; var splitItems = Object.keys(splitParams).map(function(key){ return { id: key, name: splitParams[key] }; }); return { label: item.templateName + ' (' + item.templateCode + ')', value: item.templateCode, templateName: item.templateName, taskType: item.taskType, taskTypeText: flowTaskTypeText(item.taskType), modelType: item.modelType, modelTypeText: flowModelTypeText(item.modelType), taskName: (defaults.taskName || (item.templateCode + '-run')) + '-' + Date.now(), namespace: defaults.namespace || 'flow-demo', paramRows: rowsOf(item), splitItems: splitItems }; }) } };"
                   },
                   "autoFill": {
                     "templateName": "${templateName}",
-                    "taskType": "${taskType}",
                     "modelType": "${modelType}",
                     "taskName": "${taskName}",
                     "namespace": "${namespace}",
                     "paramRows": "${paramRows}",
-                    "splitItems": "${splitItems}"
+                    "splitItems": "${splitItems}",
+                    "modelTypeText": "${modelTypeText}"
                   }
                 },
                 {
@@ -200,10 +200,6 @@
                     {
                       "label": "名称",
                       "content": "${templateName}"
-                    },
-                    {
-                      "label": "类型",
-                      "content": "${taskType}"
                     }
                   ]
                 },
@@ -248,7 +244,7 @@
                               "type": "select",
                               "name": "value",
                               "label": false,
-                              "visibleOn": "this.controlType === 'SELECT'",
+                              "visibleOn": "this.enumEnabled === true",
                               "source": "${options}",
                               "requiredOn": "this.required",
                               "clearable": false
@@ -257,7 +253,7 @@
                               "type": "input-number",
                               "name": "value",
                               "label": false,
-                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType === 'NUMBER'",
+                              "visibleOn": "!this.enumEnabled && this.valueType === 'NUMBER'",
                               "requiredOn": "this.required",
                               "step": "${step}",
                               "precision": "${precision}"
@@ -266,13 +262,13 @@
                               "type": "switch",
                               "name": "value",
                               "label": false,
-                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType === 'BOOLEAN'"
+                              "visibleOn": "!this.enumEnabled && this.valueType === 'BOOLEAN'"
                             },
                             {
                               "type": "textarea",
                               "name": "value",
                               "label": false,
-                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType === 'JSON'",
+                              "visibleOn": "!this.enumEnabled && this.valueType === 'JSON'",
                               "minRows": 2,
                               "maxRows": 5,
                               "requiredOn": "this.required"
@@ -281,7 +277,7 @@
                               "type": "input-text",
                               "name": "value",
                               "label": false,
-                              "visibleOn": "this.controlType !== 'SELECT' && this.valueType !== 'NUMBER' && this.valueType !== 'BOOLEAN' && this.valueType !== 'JSON'",
+                              "visibleOn": "!this.enumEnabled && this.valueType !== 'NUMBER' && this.valueType !== 'BOOLEAN' && this.valueType !== 'JSON'",
                               "requiredOn": "this.required"
                             }
                           ]
